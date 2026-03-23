@@ -1,0 +1,15 @@
+.content-area {
+  flex: 1;
+  overflow: auto;
+  background: var(--bg-secondary);
+  padding: 18px 22px;
+}
+
+.content-area.no-card {
+  padding: 0;
+  background: transparent;
+}
+
+.content-area.collections-content-area {
+  overflow: hidden;
+}

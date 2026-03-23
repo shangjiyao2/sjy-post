@@ -1,0 +1,76 @@
+.request-workspace {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  padding: 32px 22px 18px;
+  background: var(--app-canvas-bg, var(--bg-secondary));
+  gap: 14px;
+}
+
+.request-workspace.empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 22px 18px;
+  border: none;
+  border-radius: 0;
+}
+
+.empty-message {
+  width: 100%;
+  max-width: 420px;
+  padding: 32px 24px;
+  text-align: center;
+  color: var(--text-secondary);
+  background: var(--surface-2);
+  border: 1px solid var(--border-primary);
+  border-radius: 12px;
+}
+
+.empty-message h2 {
+  margin-bottom: var(--spacing-sm);
+  font-size: var(--font-size-lg);
+  color: var(--text-primary);
+}
+
+.empty-message p {
+  font-size: var(--font-size-md);
+}
+
+.workspace-panel {
+  overflow: auto;
+  min-height: 100px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-primary);
+  border-radius: 12px;
+}
+
+.request-panel {
+  border-bottom: none;
+}
+
+.workspace-divider {
+  height: 1px;
+  padding: 0;
+  border: none;
+  outline: none;
+  appearance: none;
+  background: var(--border-primary);
+  cursor: row-resize;
+  flex-shrink: 0;
+  margin: 0 2px;
+}
+
+.workspace-divider:hover {
+  background: var(--border-secondary);
+}
+
+.workspace-divider:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+
+.response-panel {
+  border-top: none;
+}

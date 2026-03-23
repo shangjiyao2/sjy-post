@@ -1,0 +1,40 @@
+.split-pane-divider {
+  position: relative;
+  width: 1px;
+  align-self: stretch;
+  padding: 0;
+  border: none;
+  outline: none;
+  appearance: none;
+  background: var(--border-primary);
+  cursor: col-resize;
+  flex: 0 0 1px;
+  margin: 2px 0;
+  transition: background var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
+}
+
+.split-pane-divider::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 9px;
+  transform: translateX(-50%);
+}
+
+.split-pane-divider:hover {
+  background: var(--color-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 18%, transparent);
+}
+
+.split-pane-divider.is-dragging {
+  background: var(--color-primary);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-primary) 24%, transparent);
+  transform: scaleX(1.8);
+}
+
+.split-pane-divider:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}

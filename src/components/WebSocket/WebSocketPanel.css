@@ -1,0 +1,110 @@
+.websocket-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--bg-primary);
+}
+
+.ws-url-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.ws-url-input {
+  flex: 1;
+  font-family: var(--font-mono);
+}
+
+.ws-messages-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.ws-messages-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.ws-messages-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+.ws-message {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 6px 8px;
+  margin-bottom: 4px;
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+
+.ws-message.sent {
+  background: var(--bg-success-light, rgba(82, 196, 26, 0.1));
+}
+
+.ws-message.received {
+  background: var(--bg-info-light, rgba(24, 144, 255, 0.1));
+}
+
+.ws-message.system {
+  background: var(--bg-secondary);
+  color: var(--text-tertiary);
+  font-style: italic;
+}
+
+.ws-message-icon {
+  width: 16px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.ws-message.sent .ws-message-icon {
+  color: #52c41a;
+}
+
+.ws-message.received .ws-message-icon {
+  color: #1890ff;
+}
+
+.ws-message-time {
+  color: var(--text-tertiary);
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.ws-message-data {
+  flex: 1;
+  word-break: break-all;
+  white-space: pre-wrap;
+}
+
+.ws-send-bar {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  padding: 12px;
+  border-top: 1px solid var(--border-color);
+}
+
+.ws-message-input {
+  flex: 1;
+  font-family: var(--font-mono);
+}
+
+.ws-messages-list .ant-empty {
+  margin-top: 40px;
+}

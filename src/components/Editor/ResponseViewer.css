@@ -1,0 +1,312 @@
+.response-viewer {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: transparent;
+  padding: 12px;
+  gap: 10px;
+}
+
+.response-viewer.loading,
+.response-viewer.empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ===== Status head (Pencil: respHead) ===== */
+.response-status-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.response-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.response-status-spacer {
+  flex: 1;
+}
+
+.response-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 22px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.response-pill-status.success {
+  color: var(--pill-success-text);
+  background: var(--pill-success-bg);
+  border-color: var(--pill-success-border);
+}
+
+.response-pill-status.warning {
+  color: var(--pill-warning-text);
+  background: var(--pill-warning-bg);
+  border-color: var(--pill-warning-border);
+}
+
+.response-pill-status.error {
+  color: var(--pill-error-text);
+  background: var(--pill-error-bg);
+  border-color: var(--pill-error-border);
+}
+
+.response-pill-status.neutral {
+  color: var(--pill-neutral-text);
+  background: var(--pill-neutral-bg);
+  border-color: var(--pill-neutral-border);
+}
+
+.response-pill-time {
+  color: var(--pill-time-text);
+  background: var(--pill-time-bg);
+  border-color: var(--pill-time-border);
+}
+
+.response-pill-size {
+  color: var(--pill-neutral-text);
+  background: var(--pill-neutral-bg);
+  border-color: var(--pill-neutral-border);
+}
+
+/* ===== Search (Pencil: respSearch) ===== */
+.response-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--border-primary);
+  background: var(--surface-2);
+}
+
+.response-search-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--search-icon);
+  flex-shrink: 0;
+}
+
+.response-search-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  padding: 0;
+
+  font-family: var(--font-family);
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--text-primary);
+}
+
+.response-search-input::placeholder {
+  color: var(--text-muted);
+}
+
+/* ===== Tabs (Pencil: respTabs) ===== */
+.response-tabs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.response-tab {
+  height: 30px;
+  padding: 6px 10px;
+  border-radius: 10px;
+
+  border: 1px solid var(--border-primary);
+  background: var(--surface-1);
+
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--text-muted);
+
+  transition:
+    background var(--transition-fast),
+    color var(--transition-fast),
+    border-color var(--transition-fast);
+}
+
+.response-tab:hover {
+  background: var(--bg-hover);
+}
+
+.response-tab.active {
+  background: var(--pill-active-bg);
+  border-color: var(--pill-active-border);
+  color: var(--text-inverse);
+}
+
+/* ===== Content ===== */
+.response-section {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+.test-results {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+.response-body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.binary-notice {
+  padding: 24px;
+  text-align: center;
+  color: var(--text-muted);
+  background: var(--surface-1);
+  border: 1px solid var(--border-primary);
+  border-radius: 12px;
+  font-size: 13px;
+}
+
+/* JSON view toggle (Raw/Tree) */
+.response-body-toggle {
+  display: inline-flex;
+  gap: 6px;
+}
+
+.response-body-toggle-item {
+  height: 26px;
+  padding: 0 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border-primary);
+  background: var(--surface-1);
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.response-body-toggle-item.active {
+  background: var(--pill-active-bg);
+  border-color: var(--pill-active-border);
+  color: var(--text-inverse);
+}
+
+/* Raw code card (Pencil: respBody) */
+.response-code-card {
+  flex: 1;
+  min-height: 0;
+  border-radius: 12px;
+  border: 1px solid var(--border-primary);
+  background: var(--surface-1);
+  overflow: hidden;
+}
+
+.response-code {
+  margin: 0;
+  padding: 12px;
+  color: var(--code-foreground);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* JsonTreeView container: match card surface */
+.response-body .json-tree-view {
+  flex: 1;
+  min-height: 0;
+  border-radius: 12px;
+  border: 1px solid var(--border-primary);
+  background: var(--surface-1);
+  overflow: hidden;
+}
+
+/* Ant Table (headers / tests) — make it blend with Pencil card surface */
+.response-viewer .ant-table {
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--surface-1);
+  border: 1px solid var(--border-primary);
+}
+
+.response-viewer .ant-table-container {
+  border-radius: 12px;
+}
+
+.response-viewer .ant-table-thead > tr > th {
+  background: var(--surface-1);
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 600;
+  border-bottom: 1px solid var(--border-primary);
+}
+
+.response-viewer .ant-table-tbody > tr > td {
+  background: var(--surface-1);
+  border-bottom: 1px solid var(--border-primary);
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.response-viewer .ant-table-tbody > tr:hover > td {
+  background: var(--bg-hover);
+}
+
+.header-name {
+  color: var(--text-primary);
+  font-weight: 600;
+  font-family: var(--font-mono);
+}
+
+.header-value {
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+}
+
+/* Test pills */
+.test-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  border: 1px solid transparent;
+}
+
+.test-pill.success {
+  color: var(--pill-success-text);
+  background: var(--pill-success-bg);
+  border-color: var(--pill-success-border);
+}
+
+.test-pill.error {
+  color: var(--pill-error-text);
+  background: var(--pill-error-bg);
+  border-color: var(--pill-error-border);
+}
+
+.test-message {
+  color: var(--text-secondary);
+}

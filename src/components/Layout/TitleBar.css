@@ -1,0 +1,62 @@
+.title-bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  height: 32px;
+  background: transparent;
+  border-bottom: none;
+  user-select: none;
+  -webkit-app-region: drag;
+}
+
+.title-bar-right {
+  position: absolute;
+  right: 24px;
+  top: 6px;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  -webkit-app-region: no-drag;
+}
+
+.window-btn {
+  width: 28px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  padding: 0;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.window-btn:hover {
+  background: var(--bg-hover);
+}
+
+.window-icon {
+  display: inline-block;
+}
+
+.window-icon.minimize {
+  width: 10px;
+  height: 1px;
+  background: var(--window-icon-color, #4c556a);
+}
+
+.window-icon.maximize {
+  width: 9px;
+  height: 9px;
+  border: 1px solid var(--window-icon-color, #4c556a);
+  box-sizing: border-box;
+}
+
+.window-icon.close {
+  width: 10px;
+  height: 10px;
+  mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12" stroke="black" stroke-width="2" stroke-linecap="round"/></svg>') center/contain no-repeat;
+  background: var(--window-icon-color, #4c556a);
+}

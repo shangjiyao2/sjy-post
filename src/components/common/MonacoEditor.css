@@ -1,0 +1,24 @@
+.monaco-editor-wrapper {
+  width: 100%;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.monaco-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--text-tertiary);
+  font-size: var(--font-size-sm);
+}
+
+/* Override Monaco's default styles to match theme */
+.monaco-editor-wrapper .monaco-editor {
+  --vscode-editor-background: var(--bg-secondary);
+}
+
+.monaco-editor-wrapper .monaco-editor .margin {
+  background: var(--bg-secondary);
+}

@@ -1,0 +1,64 @@
+.environment-manager {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.env-modal-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.env-header {
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 1px solid var(--border-primary);
+}
+
+.env-name-input {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.env-name-input span {
+  width: 60px;
+  flex-shrink: 0;
+}
+
+.env-name-input .ant-input {
+  flex: 1;
+}
+
+.env-variables {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.variables-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 500;
+}
+
+.env-variables .ant-table {
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-sm);
+}
+
+.env-variables .ant-table-thead > tr > th {
+  background: var(--bg-secondary);
+  font-size: var(--font-size-sm);
+  padding: 8px 12px;
+}
+
+.env-variables .ant-table-tbody > tr > td {
+  padding: 4px 8px;
+}
+
+.env-variables .ant-input {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+}

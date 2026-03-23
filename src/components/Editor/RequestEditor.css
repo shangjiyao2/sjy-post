@@ -1,0 +1,467 @@
+.request-editor {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 12px;
+  background: transparent;
+}
+
+.request-editor-header {
+  display: flex;
+  align-items: center;
+  min-height: 22px;
+  margin-bottom: 10px;
+}
+
+.request-editor-title {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--text-primary);
+}
+
+.url-bar {
+  display: flex;
+  align-items: center;
+  margin-bottom: var(--spacing-md);
+
+  /* Pencil: reqBar (radius 10, padding 10/12, bg+stroke) */
+  padding: 10px 12px;
+  background: var(--surface-1);
+  border: 1px solid var(--border-primary);
+  border-radius: 10px;
+
+  gap: 10px;
+}
+
+/* Make Ant Select look like a pill tag */
+.method-select {
+  flex-shrink: 0;
+  width: 96px;
+}
+
+.method-select .ant-select-selector {
+  height: 30px !important;
+  border-radius: 8px !important;
+  border: 1px solid transparent !important;
+  background: var(--method-pill-bg) !important;
+  padding: 0 14px !important;
+}
+
+.method-select .ant-select-selection-item {
+  line-height: 28px !important;
+  text-align: center;
+  font-weight: 600;
+  font-size: 13px;
+  color: #ffffff;
+}
+
+.method-select.method-select-get .ant-select-selector {
+  background: color-mix(in srgb, var(--method-get) 18%, var(--surface-1)) !important;
+  border-color: color-mix(in srgb, var(--method-get) 34%, transparent) !important;
+}
+
+.method-select.method-select-post .ant-select-selector {
+  background: color-mix(in srgb, var(--method-post) 18%, var(--surface-1)) !important;
+  border-color: color-mix(in srgb, var(--method-post) 34%, transparent) !important;
+}
+
+.method-select.method-select-put .ant-select-selector {
+  background: color-mix(in srgb, var(--method-put) 18%, var(--surface-1)) !important;
+  border-color: color-mix(in srgb, var(--method-put) 34%, transparent) !important;
+}
+
+.method-select.method-select-delete .ant-select-selector {
+  background: color-mix(in srgb, var(--method-delete) 18%, var(--surface-1)) !important;
+  border-color: color-mix(in srgb, var(--method-delete) 34%, transparent) !important;
+}
+
+.method-select.method-select-patch .ant-select-selector {
+  background: color-mix(in srgb, var(--method-patch) 18%, var(--surface-1)) !important;
+  border-color: color-mix(in srgb, var(--method-patch) 34%, transparent) !important;
+}
+
+.method-select.method-select-head .ant-select-selector {
+  background: color-mix(in srgb, var(--method-head) 18%, var(--surface-1)) !important;
+  border-color: color-mix(in srgb, var(--method-head) 34%, transparent) !important;
+}
+
+.method-select.method-select-options .ant-select-selector {
+  background: color-mix(in srgb, var(--method-options) 18%, var(--surface-1)) !important;
+  border-color: color-mix(in srgb, var(--method-options) 34%, transparent) !important;
+}
+
+.method-select.method-select-get .ant-select-selection-item {
+  color: var(--method-get);
+}
+
+.method-select.method-select-post .ant-select-selection-item {
+  color: var(--method-post);
+}
+
+.method-select.method-select-put .ant-select-selection-item {
+  color: var(--method-put);
+}
+
+.method-select.method-select-delete .ant-select-selection-item {
+  color: var(--method-delete);
+}
+
+.method-select.method-select-patch .ant-select-selection-item {
+  color: var(--method-patch);
+}
+
+.method-select.method-select-head .ant-select-selection-item {
+  color: var(--method-head);
+}
+
+.method-select.method-select-options .ant-select-selection-item {
+  color: var(--method-options);
+}
+
+.method-select .ant-select-arrow {
+  display: none;
+}
+
+.method-select-dropdown .ant-select-item-option-content {
+  font-weight: 600;
+}
+
+.method-option {
+  font-weight: 600;
+}
+
+.method-option.method-option-get,
+.method-select-dropdown .ant-select-item-option[title='GET'] .ant-select-item-option-content {
+  color: var(--method-get);
+}
+
+.method-option.method-option-post,
+.method-select-dropdown .ant-select-item-option[title='POST'] .ant-select-item-option-content {
+  color: var(--method-post);
+}
+
+.method-option.method-option-put,
+.method-select-dropdown .ant-select-item-option[title='PUT'] .ant-select-item-option-content {
+  color: var(--method-put);
+}
+
+.method-option.method-option-delete,
+.method-select-dropdown .ant-select-item-option[title='DELETE'] .ant-select-item-option-content {
+  color: var(--method-delete);
+}
+
+.method-option.method-option-patch,
+.method-select-dropdown .ant-select-item-option[title='PATCH'] .ant-select-item-option-content {
+  color: var(--method-patch);
+}
+
+.method-option.method-option-head,
+.method-select-dropdown .ant-select-item-option[title='HEAD'] .ant-select-item-option-content {
+  color: var(--method-head);
+}
+
+.method-option.method-option-options,
+.method-select-dropdown .ant-select-item-option[title='OPTIONS'] .ant-select-item-option-content {
+  color: var(--method-options);
+}
+
+.url-input {
+  flex: 1;
+}
+
+/* VariableHighlightInput: match Pencil URL text (Inter 12) and remove its own border/bg */
+.url-input.variable-highlight-input {
+  font-family: var(--font-family);
+  font-size: 14px;
+}
+
+.url-input.variable-highlight-input .actual-input {
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
+  line-height: 20px;
+  font-family: inherit;
+  font-size: inherit;
+}
+
+.url-input.variable-highlight-input .highlight-overlay {
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  line-height: 20px;
+}
+
+.url-input.variable-highlight-input .actual-input::placeholder {
+  color: var(--text-muted);
+}
+
+.body-editor {
+  display: flex;
+  flex-direction: column;
+}
+
+.body-textarea {
+  flex: 1;
+  min-height: 200px;
+  resize: vertical;
+  font-family: var(--font-mono) !important;
+  font-size: 14px;
+}
+
+.key-value-editor {
+  padding: 0;
+}
+
+.key-value-editor .ant-table {
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.key-value-editor .ant-table-thead > tr > th {
+  background: var(--bg-tertiary);
+  font-size: 14px;
+  font-weight: var(--font-weight-medium);
+  padding: 4px 6px;
+  border-bottom: 1px solid var(--border-primary);
+  border-right: 1px solid var(--border-primary);
+}
+
+.key-value-editor .ant-table-tbody > tr > td {
+  padding: 0;
+  border-bottom: 1px solid var(--border-primary);
+  border-right: 1px solid var(--border-primary);
+}
+
+/* Checkbox column needs small padding */
+.key-value-editor .ant-table-tbody > tr > td:first-child,
+.key-value-editor .ant-table-thead > tr > th:first-child {
+  padding: 0 2px;
+  text-align: center;
+}
+
+/* Delete button column */
+.key-value-editor .ant-table-tbody > tr > td:last-child,
+.key-value-editor .ant-table-thead > tr > th:last-child {
+  padding: 0 2px;
+  text-align: center;
+}
+
+.key-value-editor .ant-table-tbody > tr:hover > td {
+  background: var(--bg-hover);
+}
+
+/* Borderless inputs that fill the cell */
+.key-value-editor .ant-input,
+.key-value-editor .ant-input:focus,
+.key-value-editor .ant-input:hover {
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 6px 8px;
+  font-size: 14px;
+  height: auto;
+  background: transparent;
+}
+
+/* Borderless selects */
+.key-value-editor .ant-select-selector {
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: 0 8px !important;
+  font-size: 14px;
+  background: transparent !important;
+}
+
+.key-value-editor .ant-select-single .ant-select-selector {
+  height: 30px !important;
+}
+
+.key-value-editor .ant-select-single .ant-select-selection-item {
+  line-height: 30px !important;
+}
+
+.key-value-editor .ant-btn-sm {
+  border: none;
+  box-shadow: none;
+  height: 24px;
+  width: 24px;
+  padding: 0;
+}
+
+.key-value-editor .ant-table-tbody > tr > td:last-child {
+  border-right: none;
+}
+
+.key-value-editor .ant-table-thead > tr > th:last-child {
+  border-right: none;
+}
+
+.key-value-editor .kv-disabled,
+.key-value-editor .kv-disabled.ant-input {
+  opacity: 0.45;
+  text-decoration: line-through;
+}
+
+/* File picker compact style */
+.key-value-editor .ant-space-compact {
+  width: 100%;
+}
+
+.key-value-editor .ant-space-compact .ant-input {
+  padding: 6px 8px;
+}
+
+.key-value-editor .ant-space-compact .ant-btn {
+  border: none;
+  border-left: 1px solid var(--border-primary);
+  border-radius: 0;
+  box-shadow: none;
+  height: 30px;
+}
+
+.editor-table-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 6px;
+}
+
+.editor-table-actions-parameter {
+  justify-content: flex-start;
+  margin-top: 6px;
+  margin-bottom: 0;
+}
+
+.editor-table-action.ant-btn {
+  min-height: 28px;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border-primary);
+  background: var(--chip-bg);
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+  box-shadow: none;
+}
+
+.editor-table-action-parameter.ant-btn {
+  min-height: 32px;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: var(--surface-1);
+  justify-content: flex-start;
+}
+
+.editor-table-action-parameter.ant-btn .anticon {
+  color: var(--border-focus);
+}
+
+.editor-table-action-parameter.ant-btn:hover,
+.editor-table-action-parameter.ant-btn:focus {
+  border-color: var(--env-selected-border, var(--border-primary));
+  background: var(--surface-1);
+  color: var(--text-primary);
+}
+
+.editor-icon-action.ant-btn {
+  width: 28px;
+  min-width: 28px;
+  height: 28px;
+  padding: 0;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  color: var(--text-muted);
+}
+
+.editor-icon-action.ant-btn:hover,
+.editor-icon-action.ant-btn:focus {
+  background: var(--surface-1);
+  border-color: var(--border-primary);
+  color: var(--text-primary);
+}
+
+.editor-icon-action-danger.ant-btn:hover,
+.editor-icon-action-danger.ant-btn:focus {
+  color: var(--pill-error-text);
+  border-color: var(--pill-error-border);
+}
+
+.auth-editor {
+  padding: var(--spacing-md);
+}
+
+.auth-type-selector {
+  margin-bottom: var(--spacing-md);
+}
+
+.auth-type-selector .ant-radio-button-wrapper {
+  font-size: 14px;
+  border-radius: var(--radius-md);
+}
+
+.auth-type-selector .ant-radio-button-wrapper:first-child {
+  border-radius: var(--radius-md) 0 0 var(--radius-md);
+}
+
+.auth-type-selector .ant-radio-button-wrapper:last-child {
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+}
+
+.auth-type-selector .ant-radio-button-wrapper-checked {
+  background: var(--color-primary-light);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.auth-config {
+  padding: var(--spacing-md);
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+}
+
+.auth-none-message {
+  color: var(--text-tertiary);
+  text-align: center;
+  padding: var(--spacing-2xl);
+  font-size: 14px;
+}
+
+.auth-form {
+  max-width: 400px;
+}
+
+.auth-form .ant-form-item {
+  margin-bottom: var(--spacing-md);
+}
+
+.auth-form .ant-form-item-label > label {
+  font-size: 14px;
+  font-weight: var(--font-weight-medium);
+  color: var(--text-secondary);
+}
+
+/* Tabs styling */
+.request-editor .ant-tabs-nav {
+  margin-bottom: var(--spacing-md);
+}
+
+.request-editor .ant-tabs-tab {
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-size: 14px;
+  font-weight: var(--font-weight-medium);
+}
+
+.request-editor .ant-tabs-tab-active {
+  color: var(--color-primary);
+}
+
+.request-editor .ant-tabs-ink-bar {
+  background: var(--color-primary);
+  height: 2px;
+  border-radius: var(--radius-full);
+}

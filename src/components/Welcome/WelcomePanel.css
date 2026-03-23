@@ -1,0 +1,205 @@
+.welcome-page {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  padding: 0;
+
+  /* Pencil: hero (1440x900) mesh gradient / dark nebula / pure black */
+  background-color: var(--app-canvas-bg);
+  background-image: var(--welcome-hero-bg);
+}
+
+.welcome-hero {
+  position: absolute;
+  width: 640px;
+  left: 50%;
+  top: 180px;
+  transform: translateX(-50%);
+}
+
+.welcome-brand {
+  position: relative;
+  width: 640px;
+  height: 110px;
+}
+
+.brand-mark {
+  position: absolute;
+  left: 0;
+  top: 6px;
+  width: 56px;
+  height: 56px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #5b8cff 0%, #62f6e2 100%);
+}
+
+.brand-title {
+  position: absolute;
+  left: 76px;
+  top: 0;
+  font-size: 41px;
+  line-height: 1;
+  font-weight: 700;
+  color: var(--welcome-title-text, var(--text-primary));
+  letter-spacing: -0.02em;
+}
+
+.brand-subtitle {
+  position: absolute;
+  left: 78px;
+  top: 54px;
+  font-size: 23px;
+  font-weight: 600;
+  color: var(--welcome-title-text, var(--text-primary));
+}
+
+.welcome-desc {
+  margin-top: 20px;
+  width: 640px;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--welcome-desc-text, var(--text-muted));
+}
+
+.welcome-center {
+  position: absolute;
+  width: 640px;
+  left: 50%;
+  top: 400px;
+  transform: translateX(-50%);
+}
+
+.welcome-section-title {
+  width: 640px;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--welcome-title-text, #1b2336);
+}
+
+.welcome-features {
+  width: 640px;
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.welcome-feature-col {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.welcome-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  padding: 18px;
+  border-radius: 14px;
+
+  background: var(--surface-2);
+  border: 1px solid var(--border-primary);
+}
+
+.card-icon {
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.card-lucide-icon {
+  width: 22px;
+  height: 22px;
+}
+
+.card-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--welcome-title-text, var(--text-primary));
+}
+
+.card-desc {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--welcome-muted-text, var(--text-muted));
+}
+
+.welcome-actions {
+  position: absolute;
+  right: 32px;
+  bottom: 32px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.welcome-actions .ant-btn {
+  height: auto;
+  padding: 10px 16px;
+  border-radius: 10px !important;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.btn-ghost {
+  background: var(--welcome-secondary-btn-bg) !important;
+  border-color: var(--border-primary) !important;
+  color: var(--welcome-title-text, var(--text-primary)) !important;
+}
+
+.btn-primary {
+  background: var(--welcome-primary-btn-bg) !important;
+  border-color: var(--welcome-primary-btn-bg) !important;
+  color: #ffffff !important;
+}
+
+.btn-ghost:hover {
+  background: var(--surface-1) !important;
+  border-color: var(--border-primary) !important;
+  color: var(--welcome-title-text, var(--text-primary)) !important;
+  box-shadow: none !important;
+}
+
+.btn-ghost:focus-visible {
+  outline: 2px solid var(--border-primary);
+  outline-offset: 2px;
+  box-shadow: none !important;
+}
+
+.btn-primary:hover {
+  background: var(--welcome-primary-btn-bg) !important;
+  border-color: var(--welcome-primary-btn-bg) !important;
+  color: #ffffff !important;
+  box-shadow: none !important;
+  opacity: 0.96;
+}
+
+.btn-primary:focus-visible {
+  outline: 2px solid var(--border-primary);
+  outline-offset: 2px;
+  box-shadow: none !important;
+}
+
+.btn-ghost:active,
+.btn-primary:active {
+  opacity: 0.9;
+}
+
+.btn-ghost:disabled,
+.btn-primary:disabled,
+.btn-ghost[disabled],
+.btn-primary[disabled] {
+  background: var(--surface-1) !important;
+  border-color: var(--border-primary) !important;
+  color: var(--text-muted) !important;
+  opacity: 1;
+  cursor: not-allowed;
+  box-shadow: none !important;
+}
+
+

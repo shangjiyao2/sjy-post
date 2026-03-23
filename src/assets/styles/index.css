@@ -1,0 +1,717 @@
+:root {
+  /* ========================================
+   * Light Theme - Clean & Professional
+   * Reference: Interactive UI with clean whites and dark accents
+   * ======================================== */
+
+  /* Backgrounds - Pencil aligned */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f7f8fb;
+  --bg-tertiary: #f0f3fa;
+  --bg-hover: rgba(27, 35, 54, 0.04);
+  --bg-active: rgba(27, 35, 54, 0.08);
+
+  /* Pencil detail-page surfaces */
+  --surface-1: #f7f8fb;
+  --surface-2: #ffffff;
+
+  /* Gradient backgrounds - Subtle */
+  --bg-gradient-subtle: linear-gradient(180deg, #ffffff 0%, #fafafa 100%);
+  --bg-gradient-sidebar: linear-gradient(180deg, #fafafa 0%, #ffffff 100%);
+  --bg-glass: rgba(255, 255, 255, 0.9);
+  --bg-glass-hover: rgba(255, 255, 255, 0.98);
+
+  /* Welcome hero background (Pencil mesh gradient - closest approximation) */
+  --welcome-hero-bg: radial-gradient(circle at 0% 0%, #F8FBFF 0%, rgba(248, 251, 255, 0) 65%),
+    radial-gradient(circle at 50% 0%, #EEF3FF 0%, rgba(238, 243, 255, 0) 65%),
+    radial-gradient(circle at 100% 0%, #F8F2FF 0%, rgba(248, 242, 255, 0) 65%),
+    radial-gradient(circle at 0% 50%, #F2F9FF 0%, rgba(242, 249, 255, 0) 65%),
+    radial-gradient(circle at 50% 50%, #FFFFFF 0%, rgba(255, 255, 255, 0) 65%),
+    radial-gradient(circle at 100% 50%, #F7F8FF 0%, rgba(247, 248, 255, 0) 65%),
+    radial-gradient(circle at 0% 100%, #F0F7FF 0%, rgba(240, 247, 255, 0) 65%),
+    radial-gradient(circle at 50% 100%, #F7F2FF 0%, rgba(247, 242, 255, 0) 65%),
+    radial-gradient(circle at 100% 100%, #FFFFFF 0%, rgba(255, 255, 255, 0) 65%),
+    #FFFFFF;
+
+  /* Text Colors - High Contrast */
+  --text-primary: #1a1a1a;
+  --text-secondary: #525252;
+  --text-tertiary: #a3a3a3;
+  --text-inverse: #ffffff;
+
+  /* Pencil detail-page muted text (tabs/placeholder) */
+  --text-muted: #6b7285;
+
+  /* Pencil detail-page dark pills */
+  --method-pill-bg: #111827;
+  --pill-active-bg: #111827;
+  --pill-active-border: transparent;
+
+  /* Pencil response pills */
+  --pill-success-text: #16a34a;
+  --pill-success-bg: #f0fdf4;
+  --pill-success-border: #bbf7d0;
+  --pill-warning-text: #d97706;
+  --pill-warning-bg: #fffbeb;
+  --pill-warning-border: #fde68a;
+  --pill-error-text: #dc2626;
+  --pill-error-bg: #fef2f2;
+  --pill-error-border: #fecaca;
+  --pill-time-text: #2563eb;
+  --pill-time-bg: #eef3ff;
+  --pill-time-border: #d6e4ff;
+  --pill-neutral-text: var(--text-muted);
+  --pill-neutral-bg: var(--surface-1);
+  --pill-neutral-border: var(--border-primary);
+
+  /* Pencil response search/code */
+  --search-icon: #8a90a2;
+  --code-foreground: #4c556a;
+
+  /* Borders - Pencil aligned */
+  --border-primary: #e5eaf5;
+  --border-secondary: #c7cedd;
+  --border-focus: #5b8cff;
+
+  /* Brand Colors - Dark Accent (matching reference button style) */
+  --color-primary: #1a1a1a;
+  --color-primary-hover: #404040;
+  --color-primary-light: #f5f5f5;
+  --color-accent: #7c3aed;
+  --color-accent-light: #ede9fe;
+
+  /* Welcome primary button background (Pencil: #111827) */
+  --welcome-primary-btn-bg: #111827;
+
+  /* Welcome secondary button background */
+  --welcome-secondary-btn-bg: var(--surface-2);
+
+  /* Welcome text tokens */
+  --welcome-title-text: #1b2336;
+  --welcome-desc-text: #5b647a;
+  --welcome-muted-text: #6b7285;
+
+  /* For rgba(var(...)) usages */
+  --color-primary-rgb: 26, 26, 26;
+
+  /* Status Colors */
+  --color-success: #22c55e;
+  --color-success-light: #dcfce7;
+  --color-warning: #f59e0b;
+  --color-warning-light: #fef3c7;
+  --color-error: #ef4444;
+  --color-error-light: #fee2e2;
+  --color-info: #3b82f6;
+  --color-info-light: #dbeafe;
+
+  /* HTTP Method Colors */
+  --method-get: #22c55e;
+  --method-post: #f59e0b;
+  --method-put: #3b82f6;
+  --method-patch: #8b5cf6;
+  --method-delete: #ef4444;
+  --method-options: #737373;
+  --method-head: #14b8a6;
+
+  /* Shadows - Clean & Minimal */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+  --shadow-glow: 0 0 0 transparent;
+  --shadow-inner: inset 0 1px 2px rgba(0, 0, 0, 0.04);
+
+  /* Spacing */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-2xl: 48px;
+
+  /* Border Radius - Consistent */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 9999px;
+
+  /* Font */
+  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', Consolas, 'Liberation Mono', monospace;
+  --font-size-xs: 12px;
+  --font-size-sm: 13px;
+  --font-size-md: 15px;
+  --font-size-lg: 17px;
+  --font-size-xl: 19px;
+  --font-size-2xl: 25px;
+
+  /* Font Weight */
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* Transitions */
+  --transition-fast: 0.15s ease;
+  --transition-normal: 0.2s ease;
+  --transition-slow: 0.3s ease;
+
+  /* Layout */
+  --titlebar-height: 32px;
+  --toolbar-height: 44px;
+  --statusbar-height: 28px;
+  --tabbar-height: 40px;
+  --sidebar-width: 360px;
+
+  /* Window controls */
+  --window-icon-color: #4c556a;
+
+  /* App canvas background (page frame) */
+  --app-canvas-bg: #f7f8fa;
+
+  /* NavRail (Global Nav) */
+  --nav-active-bg: #eef3ff;
+  --nav-active-text: #1b2336;
+  --nav-active-border: #dde6ff;
+
+  /* List row selection */
+  --list-active-bg: #eef3ff;
+  --list-active-border: #dde6ff;
+
+  /* Window controls */
+  --window-icon-color: #4c556a;
+
+  /* Chips (filters/range) */
+  --chip-bg: #f0f3fa;
+  --chip-active-bg: #eef3ff;
+  --chip-active-text: #2563eb;
+
+  /* History page */
+  --history-selected-border: #dde6ff;
+  --history-code-foreground: #4c556a;
+
+  /* Environments page */
+  --env-selected-border: #dde6ff;
+  --env-muted-emphasis: #4c556a;
+  --env-search-placeholder: #8a90a2;
+
+  /* Empty State - Light theme illustration colors */
+  --illustration-primary: #1a1a1a;
+  --illustration-secondary: #e5e5e5;
+  --illustration-accent: #7c3aed;
+  --illustration-glow: transparent;
+}
+
+/* ========================================
+ * Dark Theme - Nebula UI Inspired
+ * Reference: Deep black with warm glow effects
+ * ======================================== */
+[data-theme="dark"] {
+  /* Backgrounds - Pencil aligned */
+  --bg-primary: #0f1117;
+  --bg-secondary: #111827;
+  --bg-tertiary: #1a1d27;
+  --bg-hover: rgba(231, 236, 244, 0.06);
+  --bg-active: rgba(231, 236, 244, 0.1);
+
+  /* Pencil detail-page surfaces */
+  --surface-1: #1a1d27;
+  --surface-2: #111827;
+
+  /* Gradient backgrounds - Warm undertones */
+  --bg-gradient-subtle: radial-gradient(ellipse at 50% 0%, rgba(251, 146, 60, 0.08) 0%, #0a0a0a 50%);
+  --bg-gradient-sidebar: linear-gradient(180deg, #141414 0%, #0a0a0a 100%);
+  --bg-glass: rgba(20, 20, 20, 0.95);
+  --bg-glass-hover: rgba(31, 31, 31, 0.98);
+
+  /* Welcome hero background (Pencil mesh gradient - closest approximation) */
+  --welcome-hero-bg: radial-gradient(circle at 0% 0%, #0F1117 0%, rgba(15, 17, 23, 0) 65%),
+    radial-gradient(circle at 50% 0%, #0B1220 0%, rgba(11, 18, 32, 0) 65%),
+    radial-gradient(circle at 100% 0%, #111827 0%, rgba(17, 24, 39, 0) 65%),
+    radial-gradient(circle at 0% 50%, #0B1220 0%, rgba(11, 18, 32, 0) 65%),
+    radial-gradient(circle at 50% 50%, #111827 0%, rgba(17, 24, 39, 0) 65%),
+    radial-gradient(circle at 100% 50%, #0F172A 0%, rgba(15, 23, 42, 0) 65%),
+    radial-gradient(circle at 0% 100%, #111827 0%, rgba(17, 24, 39, 0) 65%),
+    radial-gradient(circle at 50% 100%, #0F172A 0%, rgba(15, 23, 42, 0) 65%),
+    radial-gradient(circle at 100% 100%, #0B1220 0%, rgba(11, 18, 32, 0) 65%),
+    #0F1117;
+
+  /* Text Colors - Warm White */
+  --text-primary: #fafaf9;
+  --text-secondary: #a8a29e;
+  --text-tertiary: #57534e;
+  --text-inverse: #0a0a0a;
+
+  /* Pencil detail-page muted text (tabs/placeholder) */
+  --text-muted: #a6adbd;
+
+  /* Pencil detail-page dark pills */
+  --method-pill-bg: #0b1220;
+  --pill-active-bg: #0b1220;
+  --pill-active-border: transparent;
+
+  /* Pencil response pills */
+  --pill-success-text: #86efac;
+  --pill-success-bg: #052014;
+  --pill-success-border: #1b4332;
+  --pill-warning-text: #fbbf24;
+  --pill-warning-bg: #2a1a05;
+  --pill-warning-border: #713f12;
+  --pill-error-text: #fca5a5;
+  --pill-error-bg: #2a0b0b;
+  --pill-error-border: #7f1d1d;
+  --pill-time-text: #93c5fd;
+  --pill-time-bg: #1e2230;
+  --pill-time-border: #2b3245;
+  --pill-neutral-text: var(--text-muted);
+  --pill-neutral-bg: var(--surface-1);
+  --pill-neutral-border: var(--border-primary);
+
+  /* Pencil response search/code */
+  --search-icon: #8a90a2;
+  --code-foreground: #c9d0e2;
+
+  /* Borders - Pencil aligned */
+  --border-primary: #2b3245;
+  --border-secondary: #3b445a;
+  --border-focus: #5b8cff;
+
+  /* Brand Colors - Pencil aligned */
+  --color-primary: #5b8cff;
+  --color-primary-hover: #2563eb;
+  --color-primary-light: rgba(91, 140, 255, 0.14);
+  --color-accent: #62f6e2;
+  --color-accent-light: rgba(98, 246, 226, 0.14);
+
+  /* Welcome primary button background (Pencil: #0B1220) */
+  --welcome-primary-btn-bg: #0b1220;
+
+  /* Welcome secondary button background */
+  --welcome-secondary-btn-bg: var(--bg-secondary);
+
+  /* Welcome text tokens */
+  --welcome-title-text: #e7ecf4;
+  --welcome-desc-text: #a6adbd;
+  --welcome-muted-text: #a6adbd;
+
+  /* For rgba(var(...)) usages */
+  --color-primary-rgb: 91, 140, 255;
+
+  /* Status Colors - Adjusted for dark */
+  --color-success-light: rgba(34, 197, 94, 0.15);
+  --color-warning-light: rgba(245, 158, 11, 0.15);
+  --color-error-light: rgba(239, 68, 68, 0.15);
+  --color-info-light: rgba(59, 130, 246, 0.15);
+
+  /* Shadows - Glow effects */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.6), 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.7), 0 2px 4px -2px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.8), 0 4px 6px -4px rgba(0, 0, 0, 0.6);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.9), 0 8px 10px -6px rgba(0, 0, 0, 0.7);
+  --shadow-glow: 0 0 40px rgba(251, 146, 60, 0.2);
+  --shadow-inner: inset 0 1px 2px rgba(0, 0, 0, 0.3);
+
+  /* NavRail (Global Nav) */
+  --nav-active-bg: #1e2230;
+  --nav-active-text: #e7ecf4;
+  --nav-active-border: #2b3b55;
+
+  /* List row selection */
+  --list-active-bg: #1e2230;
+  --list-active-border: #2b3b55;
+
+  /* Window controls */
+  --window-icon-color: #a6adbd;
+
+  /* Chips (filters/range) */
+  --chip-bg: #151926;
+  --chip-active-bg: #1e2230;
+  --chip-active-text: #2563eb;
+
+  /* History page */
+  --history-selected-border: #dde6ff;
+  --history-code-foreground: #c9d0e2;
+
+  /* Environments page */
+  --env-selected-border: #dde6ff;
+  --env-muted-emphasis: #c9d0e2;
+  --env-search-placeholder: #a6adbd;
+
+  /* App canvas background (page frame) */
+  --app-canvas-bg: #0f1117;
+
+  /* Empty State - Dark theme illustration colors (warm glow) */
+  --illustration-primary: #fafaf9;
+  --illustration-secondary: #3f3f3f;
+  --illustration-accent: #fb923c;
+  --illustration-glow: rgba(251, 146, 60, 0.3);
+}
+
+/* ========================================
+ * Pure Black Theme - OLED Friendly
+ * Reference: Pencil Pure Black skin
+ * ======================================== */
+[data-theme="black"] {
+  /* Backgrounds - Pencil aligned */
+  --bg-primary: #000000;
+  --bg-secondary: #0a0a0a;
+  --bg-tertiary: #050505;
+  --bg-hover: rgba(243, 244, 246, 0.06);
+  --bg-active: rgba(243, 244, 246, 0.1);
+
+  /* Pencil detail-page surfaces */
+  --surface-1: #050505;
+  --surface-2: #0a0a0a;
+
+  /* Gradients - Disabled */
+  --bg-gradient-subtle: #000000;
+  --bg-gradient-sidebar: #000000;
+  --bg-glass: rgba(10, 10, 10, 0.95);
+  --bg-glass-hover: rgba(15, 17, 23, 0.98);
+
+  /* Welcome hero background (Pencil mesh gradient - closest approximation) */
+  --welcome-hero-bg: radial-gradient(circle at 0% 0%, #000000 0%, rgba(0, 0, 0, 0) 65%),
+    radial-gradient(circle at 50% 0%, #000000 0%, rgba(0, 0, 0, 0) 65%),
+    radial-gradient(circle at 100% 0%, #000000 0%, rgba(0, 0, 0, 0) 65%),
+    radial-gradient(circle at 0% 50%, #000000 0%, rgba(0, 0, 0, 0) 65%),
+    radial-gradient(circle at 50% 50%, #000000 0%, rgba(0, 0, 0, 0) 65%),
+    radial-gradient(circle at 100% 50%, #000000 0%, rgba(0, 0, 0, 0) 65%),
+    radial-gradient(circle at 0% 100%, #000000 0%, rgba(0, 0, 0, 0) 65%),
+    radial-gradient(circle at 50% 100%, #000000 0%, rgba(0, 0, 0, 0) 65%),
+    radial-gradient(circle at 100% 100%, #000000 0%, rgba(0, 0, 0, 0) 65%),
+    #000000;
+
+  /* Text Colors */
+  --text-primary: #e5e7eb;
+  --text-secondary: #94a3b8;
+  --text-tertiary: #64748b;
+  --text-inverse: #ffffff;
+
+  /* Pencil detail-page muted text (tabs/placeholder) */
+  --text-muted: #8b93a6;
+
+  /* Pencil detail-page dark pills */
+  --method-pill-bg: #111827;
+  --pill-active-bg: #050505;
+  --pill-active-border: var(--border-primary);
+
+  /* Pencil response pills */
+  --pill-success-text: #86efac;
+  --pill-success-bg: #052014;
+  --pill-success-border: #1b4332;
+  --pill-warning-text: #fbbf24;
+  --pill-warning-bg: #2a1a05;
+  --pill-warning-border: #713f12;
+  --pill-error-text: #fca5a5;
+  --pill-error-bg: #2a0b0b;
+  --pill-error-border: #7f1d1d;
+  --pill-time-text: #93c5fd;
+  --pill-time-bg: #061a2b;
+  --pill-time-border: #0b2a44;
+  --pill-neutral-text: var(--text-muted);
+  --pill-neutral-bg: var(--surface-1);
+  --pill-neutral-border: var(--border-primary);
+
+  /* Pencil response search/code */
+  --search-icon: #8a90a2;
+  --code-foreground: #cbd5e1;
+
+  /* Borders - Pencil aligned */
+  --border-primary: #1a2233;
+  --border-secondary: #2b3245;
+  --border-focus: #5b8cff;
+
+  /* Brand Colors - Pencil aligned */
+  --color-primary: #5b8cff;
+  --color-primary-hover: #2563eb;
+  --color-primary-light: rgba(91, 140, 255, 0.14);
+  --color-accent: #62f6e2;
+  --color-accent-light: rgba(98, 246, 226, 0.14);
+
+  /* Welcome primary button background (Pencil: #111827) */
+  --welcome-primary-btn-bg: #111827;
+
+  /* Welcome secondary button background */
+  --welcome-secondary-btn-bg: var(--bg-secondary);
+
+  /* Welcome text tokens */
+  --welcome-title-text: #f3f4f6;
+  --welcome-desc-text: #8b93a6;
+  --welcome-muted-text: #8b93a6;
+
+  /* For rgba(var(...)) usages */
+  --color-primary-rgb: 91, 140, 255;
+
+  /* Status Colors - Adjusted for dark */
+  --color-success-light: rgba(34, 197, 94, 0.15);
+  --color-warning-light: rgba(245, 158, 11, 0.15);
+  --color-error-light: rgba(239, 68, 68, 0.15);
+  --color-info-light: rgba(59, 130, 246, 0.15);
+
+  /* Shadows - Minimal */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.65);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.75), 0 1px 2px rgba(0, 0, 0, 0.55);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.8), 0 2px 4px -2px rgba(0, 0, 0, 0.65);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.85), 0 4px 6px -4px rgba(0, 0, 0, 0.7);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.9), 0 8px 10px -6px rgba(0, 0, 0, 0.75);
+  --shadow-glow: 0 0 0 transparent;
+  --shadow-inner: inset 0 1px 2px rgba(0, 0, 0, 0.35);
+
+  /* NavRail (Global Nav) */
+  --nav-active-bg: #061a2b;
+  --nav-active-text: #f3f4f6;
+  --nav-active-border: #1a2233;
+
+  /* List row selection */
+  --list-active-bg: #061a2b;
+  --list-active-border: #1a2233;
+
+  /* Window controls */
+  --window-icon-color: #8b93a6;
+
+  /* Chips (filters/range) */
+  --chip-bg: #0a0a0a;
+  --chip-active-bg: #061a2b;
+  --chip-active-text: #93c5fd;
+
+  /* History page */
+  --history-selected-border: #0b2a44;
+  --history-code-foreground: #8b93a6;
+
+  /* Environments page */
+  --env-selected-border: #0b2a44;
+  --env-muted-emphasis: #8b93a6;
+  --env-search-placeholder: #8b93a6;
+
+  /* App canvas background (page frame) */
+  --app-canvas-bg: #000000;
+
+  /* Empty State */
+  --illustration-primary: #e5e7eb;
+  --illustration-secondary: #2b3245;
+  --illustration-accent: #3b82f6;
+  --illustration-glow: transparent;
+}
+
+/* ========================================
+ * Global Styles
+ * ======================================== */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: var(--font-family);
+  font-size: var(--font-size-md);
+  line-height: 1.6;
+  color: var(--text-primary);
+  background: var(--bg-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  width: 100%;
+  height: 100%;
+}
+
+/* Scrollbar - Minimal */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-secondary);
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-tertiary);
+}
+
+/* Selection */
+::selection {
+  background: var(--color-primary);
+  color: var(--text-inverse);
+}
+
+/* Code/Mono text */
+code,
+pre,
+.mono {
+  font-family: var(--font-mono);
+}
+
+/* Link */
+a {
+  color: var(--color-primary);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+a:hover {
+  color: var(--color-primary-hover);
+}
+
+/* Button reset */
+button {
+  font-family: inherit;
+  font-size: inherit;
+  cursor: pointer;
+}
+
+/* Focus outline */
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* ========================================
+ * Ant Design Overrides - Minimalist & Sharp
+ * ======================================== */
+.ant-btn {
+  border-radius: 4px !important;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  height: 32px;
+  padding: 0 12px;
+}
+
+.ant-btn-primary {
+  background: var(--color-primary);
+  border: none;
+  color: var(--text-inverse);
+  box-shadow: none;
+}
+
+.ant-btn-primary:hover {
+  background: var(--color-primary-hover) !important;
+  opacity: 0.9;
+}
+
+.ant-input,
+.ant-input-affix-wrapper,
+.ant-select-selector,
+.ant-input-number {
+  border-radius: 6px !important;
+  /* Slightly more rounded */
+  border: 1px solid var(--border-primary) !important;
+  background: var(--bg-primary) !important;
+  transition: border-color 0.2s ease !important;
+  padding: 4px 12px !important;
+  min-height: 32px !important;
+}
+
+.ant-input:hover,
+.ant-input-affix-wrapper:hover,
+.ant-select-selector:hover {
+  border-color: var(--border-secondary) !important;
+}
+
+.ant-input:focus,
+.ant-input-affix-wrapper-focused,
+.ant-select-focused .ant-select-selector {
+  border-color: #3b82f6 !important;
+  /* Professional focus blue */
+  box-shadow: none !important;
+  /* Remove heavy glow */
+  outline: none !important;
+}
+
+.ant-tabs-tab {
+  border-radius: var(--radius-md) var(--radius-md) 0 0 !important;
+  transition: all var(--transition-fast) !important;
+}
+
+.ant-dropdown-menu {
+  border-radius: var(--radius-md) !important;
+  box-shadow: var(--shadow-lg) !important;
+  border: 1px solid var(--border-primary);
+  background: var(--bg-primary);
+}
+
+.ant-dropdown-menu-item {
+  border-radius: var(--radius-sm) !important;
+  margin: 2px 4px !important;
+}
+
+.ant-modal-content {
+  border-radius: var(--radius-lg) !important;
+  box-shadow: var(--shadow-xl) !important;
+  background: var(--bg-primary);
+}
+
+.ant-message-notice-content {
+  border-radius: var(--radius-md) !important;
+  box-shadow: var(--shadow-lg) !important;
+}
+
+.ant-tag {
+  border-radius: var(--radius-sm) !important;
+  font-weight: var(--font-weight-medium);
+}
+
+/* Dark theme specific overrides */
+[data-theme="dark"] .ant-btn-primary {
+  background: var(--color-primary);
+  box-shadow: var(--shadow-glow);
+}
+
+[data-theme="dark"] .ant-btn-primary:hover {
+  background: var(--color-primary-hover) !important;
+  box-shadow: 0 0 50px rgba(251, 146, 60, 0.3);
+}
+
+[data-theme="black"] .ant-btn-primary {
+  background: var(--color-primary);
+  box-shadow: none;
+}
+
+[data-theme="black"] .ant-btn-primary:hover {
+  background: var(--color-primary-hover) !important;
+  box-shadow: none;
+}
+
+[data-theme="dark"] .ant-input,
+[data-theme="dark"] .ant-input-affix-wrapper,
+[data-theme="dark"] .ant-select-selector {
+  background: var(--bg-secondary) !important;
+  color: var(--text-primary);
+}
+
+[data-theme="black"] .ant-input,
+[data-theme="black"] .ant-input-affix-wrapper,
+[data-theme="black"] .ant-select-selector {
+  background: var(--bg-secondary) !important;
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .ant-modal-content,
+[data-theme="dark"] .ant-dropdown-menu {
+  background: var(--bg-secondary);
+  border-color: var(--border-primary);
+}
+
+[data-theme="black"] .ant-modal-content,
+[data-theme="black"] .ant-dropdown-menu {
+  background: var(--bg-secondary);
+  border-color: var(--border-primary);
+}

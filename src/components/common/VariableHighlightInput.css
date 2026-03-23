@@ -1,0 +1,77 @@
+.variable-highlight-input {
+  position: relative;
+  flex: 1;
+  font-family: var(--font-mono);
+  font-size: 15px;
+}
+
+.highlight-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 4px 11px;
+  pointer-events: none;
+  white-space: nowrap;
+  overflow: hidden;
+  color: transparent;
+  line-height: 22px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+}
+
+.actual-input {
+  width: 100%;
+  padding: 4px 11px;
+  font-family: inherit;
+  font-size: inherit;
+  border: 1px solid var(--border-primary);
+  border-radius: 6px;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  outline: none;
+  transition: border-color 0.2s;
+  line-height: 22px;
+  caret-color: var(--text-primary);
+}
+
+.actual-input::placeholder {
+  color: var(--text-tertiary);
+}
+
+.actual-input:hover {
+  border-color: var(--color-primary);
+}
+
+.actual-input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(var(--color-primary-rgb, 91, 140, 255), 0.2);
+}
+
+.normal-text {
+  color: transparent;
+}
+
+.variable-highlight {
+  color: transparent;
+  background: rgba(255, 152, 0, 0.25);
+  border-radius: 3px;
+  padding: 0 2px;
+  margin: 0 -2px;
+}
+
+.variable-interactive {
+  pointer-events: auto;
+  cursor: default;
+}
+
+/* Ensure text visibility when variable is present */
+.variable-highlight-input .actual-input {
+  color: var(--text-primary);
+}
+
+/* Dark mode specific adjustments */
+[data-theme="dark"] .variable-highlight {
+  background: rgba(255, 152, 0, 0.3);
+}

@@ -1,0 +1,155 @@
+.json-tree-view {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.json-tree-toolbar {
+  display: flex;
+  gap: 8px;
+  padding: 8px;
+  border-bottom: 1px solid var(--border-primary);
+  background: var(--bg-secondary);
+}
+
+.json-tree-toolbar .search-input {
+  flex: 1;
+  max-width: 200px;
+}
+
+.json-tree-content {
+  flex: 1;
+  overflow: auto;
+  padding: 8px;
+}
+
+.json-node {
+  user-select: text;
+}
+
+.json-node.highlighted > .json-node-row {
+  background: rgba(255, 193, 7, 0.2);
+  border-radius: 3px;
+}
+
+.json-node-row {
+  display: flex;
+  align-items: center;
+  padding: 2px 4px;
+  border-radius: 3px;
+  transition: background 0.15s;
+}
+
+.json-node-row:hover {
+  background: var(--bg-tertiary);
+}
+
+.json-node-row:hover .json-actions {
+  opacity: 1;
+}
+
+.toggle-icon {
+  width: 16px;
+  height: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+}
+
+.toggle-icon:hover {
+  color: var(--text-primary);
+}
+
+.toggle-icon.placeholder {
+  cursor: default;
+}
+
+.json-key {
+  color: #9cdcfe;
+}
+
+.json-colon {
+  color: var(--text-tertiary);
+  margin-right: 4px;
+}
+
+.json-string {
+  color: #ce9178;
+  word-break: break-all;
+}
+
+.json-number {
+  color: #b5cea8;
+}
+
+.json-boolean {
+  color: #569cd6;
+}
+
+.json-null {
+  color: #569cd6;
+  font-style: italic;
+}
+
+.json-bracket {
+  color: var(--text-secondary);
+}
+
+.json-preview {
+  color: var(--text-tertiary);
+  font-size: 13px;
+  margin-left: 4px;
+}
+
+.json-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.action-icon {
+  cursor: pointer;
+  color: var(--text-tertiary);
+  font-size: 13px;
+  padding: 2px;
+}
+
+.action-icon:hover {
+  color: var(--color-primary);
+}
+
+.json-children {
+  /* Children container */
+}
+
+.json-closing-bracket {
+  display: flex;
+  align-items: center;
+  padding: 2px 4px;
+}
+
+/* Light theme adjustments */
+[data-theme="light"] .json-key {
+  color: #0451a5;
+}
+
+[data-theme="light"] .json-string {
+  color: #a31515;
+}
+
+[data-theme="light"] .json-number {
+  color: #098658;
+}
+
+[data-theme="light"] .json-boolean,
+[data-theme="light"] .json-null {
+  color: #0000ff;
+}

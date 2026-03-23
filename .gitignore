@@ -1,0 +1,40 @@
+# Claude / local tool files
+.ace-tool/
+.tmp-*
+
+# Frontend dependencies and build output
+node_modules/
+dist/
+.vite/
+
+# Tauri / Rust build output
+src-tauri/target/
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment files and secrets
+.env
+.env.*
+!.env.example
+
+# IDE / OS files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Local QA artifacts
+qa-screenshots/
+
+# Local planning / handoff notes
+NEXT_SESSION_HANDOFF.md
+notes.md
+task_plan.md
+
+# Local project documents
+docs/
