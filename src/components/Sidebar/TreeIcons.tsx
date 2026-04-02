@@ -48,7 +48,7 @@ export const FolderIcon: React.FC<TreeIconProps> = ({ className }) => (
 );
 
 export const ChevronDownIcon: React.FC<TreeIconProps> = ({ className }) => (
-  <LucideIcon name="chevron-down" className={className} size={14} />
+  <LucideIcon name="chevron-down" className={className} size={12} strokeWidth={2.2} />
 );
 
 export const SearchIcon: React.FC<TreeIconProps> = ({ className }) => (

@@ -158,6 +158,36 @@ export function formatProjectPathLabel(path: string): string {
   return path.split(/[\\/]/).slice(-2).join('/') || path;
 }
 
+export function buildDuplicateName(name: string, existingNames: string[], copySuffix: string): string {
+  const baseName = `${name} ${copySuffix}`.trim();
+  const normalizedNames = new Set(existingNames.map((item) => item.toLowerCase()));
+
+  if (!normalizedNames.has(baseName.toLowerCase())) {
+    return baseName;
+  }
+
+  let index = 2;
+  let nextName = `${baseName} ${index}`;
+  while (normalizedNames.has(nextName.toLowerCase())) {
+    index += 1;
+    nextName = `${baseName} ${index}`;
+  }
+
+  return nextName;
+}
+
+export function buildDuplicateEnvironmentName(
+  name: string,
+  environments: Environment[],
+  copySuffix: string,
+): string {
+  return buildDuplicateName(
+    name,
+    environments.map((environment) => environment.name),
+    copySuffix,
+  );
+}
+
 // Collection entry for multi-project support
 export interface CollectionEntry {
   project: Project;

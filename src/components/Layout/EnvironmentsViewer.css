@@ -159,6 +159,24 @@
   appearance: none;
 }
 
+.env-row-actions-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  flex: 0 0 auto;
+  border: none;
+  outline: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--env-muted-emphasis, var(--text-muted));
+  cursor: pointer;
+  opacity: 0;
+  visibility: hidden;
+  transition: background var(--transition-fast), color var(--transition-fast), opacity var(--transition-fast);
+}
+
 .env-row-content {
   flex: 1;
   min-width: 0;
@@ -200,6 +218,17 @@
 .env-row:hover,
 .env-row:has(.env-row-main:hover) {
   background: var(--surface-1);
+}
+
+.env-row:hover .env-row-actions-trigger,
+.env-row:focus-within .env-row-actions-trigger,
+.env-row-actions-trigger:focus-visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+.env-row-actions-trigger:hover {
+  background: var(--chip-bg);
 }
 
 .env-row.selected {
@@ -288,6 +317,12 @@
 .env-empty-hint {
   font-size: 13px;
   color: var(--text-muted);
+}
+
+.env-modal-copy {
+  font-size: 14px;
+  color: var(--text-primary);
+  line-height: 1.6;
 }
 
 .env-project-group {

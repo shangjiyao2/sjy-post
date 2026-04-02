@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Tree, Button, Input, Dropdown, Modal, Select, message } from 'antd';
 import type { MenuProps, TreeProps } from 'antd';
@@ -14,16 +14,18 @@ import {
   FolderOpenOutlined,
   CloseOutlined,
   SettingOutlined,
+  MoreOutlined,
+  CopyOutlined,
 } from '@ant-design/icons';
 import { open } from '@tauri-apps/plugin-dialog';
 import { useProjectStore } from '../../stores/projectStore';
 import { useRequestStore } from '../../stores/requestStore';
 import { useNavStore } from '../../stores/navStore';
-import type { TreeNode as AppTreeNode } from '../../types';
-import { createNewRequest, getHttpMethodColor } from '../../types';
+import type { Environment, TreeNode as AppTreeNode } from '../../types';
+import { buildDuplicateEnvironmentName, buildDuplicateName, createEnvironmentId, createNewRequest, getHttpMethodColor } from '../../types';
 import * as api from '../../services/api';
 import ImportDialog from '../Import/ImportDialog';
-import { ChevronDownIcon, SearchIcon } from './TreeIcons';
+import { ChevronDownIcon, FolderIcon, SearchIcon } from './TreeIcons';
 import type { NavRailItem } from '../NavRail/NavRail';
 import './Sidebar.css';
 
@@ -45,6 +47,53 @@ interface RenderableAntTreeNode extends Omit<AntTreeNode, 'title' | 'children'> 
 type RenderableTreeSelectInfo = Parameters<NonNullable<TreeProps<RenderableAntTreeNode>['onSelect']>>[1];
 
 const EMPTY_TREE_SELECTED_KEYS: React.Key[] = [];
+const INVALID_FILE_NAME_CHARS = /[\\/:*?"<>|]/;
+
+function normalizeNodePath(nodePath: string): string {
+  return nodePath.replaceAll('\\', '/');
+}
+
+function getParentFolderPath(nodePath: string): string {
+  const normalizedPath = normalizeNodePath(nodePath);
+  const lastSlashIndex = normalizedPath.lastIndexOf('/');
+  return lastSlashIndex >= 0 ? normalizedPath.slice(0, lastSlashIndex) : '.';
+}
+
+function findTreeNodeByPath(nodes: AppTreeNode[], targetPath: string): AppTreeNode | null {
+  for (const node of nodes) {
+    if (normalizeNodePath(node.path) === targetPath) {
+      return node;
+    }
+
+    const matchedChild = findTreeNodeByPath(node.children, targetPath);
+    if (matchedChild) {
+      return matchedChild;
+    }
+  }
+
+  return null;
+}
+
+function getRequestNamesInFolder(nodes: AppTreeNode[], folderPath: string): string[] {
+  const normalizedFolderPath = normalizeNodePath(folderPath);
+  const siblingNodes = normalizedFolderPath === '.'
+    ? nodes
+    : findTreeNodeByPath(nodes, normalizedFolderPath)?.children ?? [];
+
+  return siblingNodes
+    .filter((node) => node.node_type === 'request')
+    .map((node) => node.name);
+}
+
+function buildRequestTreeOverrideKey(projectPath: string, nodePath: string): string {
+  return `${projectPath}::${normalizeNodePath(nodePath)}`;
+}
+
+type EnvironmentRenameState = {
+  projectPath: string;
+  envId: string;
+  value: string;
+};
 
 interface SidebarProps {
   activeNavItem: NavRailItem;
@@ -63,8 +112,10 @@ const Sidebar: React.FC<SidebarProps> = ({ activeNavItem }) => {
   const [renameModalVisible, setRenameModalVisible] = useState(false);
   const [renameNodePath, setRenameNodePath] = useState('');
   const [renameNewName, setRenameNewName] = useState('');
+  const [renameOriginalName, setRenameOriginalName] = useState('');
   const [renameNodeProjectPath, setRenameNodeProjectPath] = useState('');
   const [importDialogVisible, setImportDialogVisible] = useState(false);
+  const [environmentRenameState, setEnvironmentRenameState] = useState<EnvironmentRenameState | null>(null);
 
   const { t } = useTranslation();
   const {
@@ -79,26 +130,51 @@ const Sidebar: React.FC<SidebarProps> = ({ activeNavItem }) => {
     closeCollection,
     setActiveProject,
     setActiveEnvironment,
+    saveEnvironment,
+    deleteEnvironment,
     toggleCollapse,
     isLoading,
   } = useProjectStore();
   const openRequest = useRequestStore((s) => s.openRequest);
   const openNewTab = useRequestStore((s) => s.openNewTab);
   const activeRequestTab = useRequestStore((s) => s.getActiveTab());
+  const requestTabs = useRequestStore((s) => s.tabs);
   const setActiveNavItem = useNavStore((s) => s.setActiveNavItem);
   const normalizedSearchValue = searchValue.trim().toLowerCase();
+  const requestTreeOverrides = useMemo(() => {
+    const overrides = new Map<string, { name: string; method?: string }>();
+
+    for (const tab of requestTabs) {
+      if (tab.type !== 'request' || !tab.projectPath || !tab.filePath) {
+        continue;
+      }
+
+      overrides.set(buildRequestTreeOverrideKey(tab.projectPath, tab.filePath), {
+        name: tab.request.name,
+        method: tab.request.method,
+      });
+    }
+
+    return overrides;
+  }, [requestTabs]);
 
   // Convert AppTreeNode to Ant Design Tree format
-  const convertToAntTree = (nodes: AppTreeNode[]): AntTreeNode[] => {
-    return nodes.map((node) => ({
-      key: node.path,
-      title: node.name,
-      isLeaf: node.node_type !== 'folder',
-      children: node.children.length > 0 ? convertToAntTree(node.children) : undefined,
-      method: node.method,
-      nodePath: node.path,
-      nodeType: node.node_type,
-    }));
+  const convertToAntTree = (nodes: AppTreeNode[], projectPath: string): AntTreeNode[] => {
+    return nodes.map((node) => {
+      const override = node.node_type === 'request'
+        ? requestTreeOverrides.get(buildRequestTreeOverrideKey(projectPath, node.path))
+        : undefined;
+
+      return {
+        key: node.path,
+        title: override?.name ?? node.name,
+        isLeaf: node.node_type !== 'folder',
+        children: node.children.length > 0 ? convertToAntTree(node.children, projectPath) : undefined,
+        method: override?.method ?? node.method,
+        nodePath: node.path,
+        nodeType: node.node_type,
+      };
+    });
   };
 
   const filterTree = (nodes: AntTreeNode[]): AntTreeNode[] => {
@@ -241,27 +317,46 @@ const Sidebar: React.FC<SidebarProps> = ({ activeNavItem }) => {
     }
   };
 
+  const resetRenameState = () => {
+    setRenameModalVisible(false);
+    setRenameNodePath('');
+    setRenameNewName('');
+    setRenameOriginalName('');
+    setRenameNodeProjectPath('');
+  };
+
   // Context menu handlers
   const handleContextMenuRename = (node: AntTreeNode, projectPath: string) => {
     setRenameNodePath(node.nodePath);
     setRenameNodeProjectPath(projectPath);
     setRenameNewName(node.title);
+    setRenameOriginalName(node.title);
     setRenameModalVisible(true);
   };
 
   const handleRename = async () => {
-    if (!renameNewName.trim()) {
+    const trimmedName = renameNewName.trim();
+    const trimmedOriginalName = renameOriginalName.trim();
+
+    if (!trimmedName) {
       message.warning(t('sidebar.enterName'));
       return;
     }
 
+    if (trimmedName === trimmedOriginalName) {
+      resetRenameState();
+      return;
+    }
+
+    if (INVALID_FILE_NAME_CHARS.test(trimmedName)) {
+      message.warning(t('sidebar.invalidNodeName'));
+      return;
+    }
+
     try {
-      await renameNode(renameNodeProjectPath, renameNodePath, renameNewName.trim());
+      await renameNode(renameNodeProjectPath, renameNodePath, trimmedName);
       message.success(t('sidebar.renamedSuccess'));
-      setRenameModalVisible(false);
-      setRenameNodePath('');
-      setRenameNewName('');
-      setRenameNodeProjectPath('');
+      resetRenameState();
     } catch (e) {
       message.error(t('sidebar.failedRename', { error: e }));
     }
@@ -294,6 +389,36 @@ const Sidebar: React.FC<SidebarProps> = ({ activeNavItem }) => {
       message.success(t('sidebar.requestCreated'));
     } catch (e) {
       message.error(t('sidebar.failedCreateRequest', { error: e }));
+    }
+  };
+
+  const handleContextMenuDuplicateRequest = async (node: AntTreeNode, projectPath: string) => {
+    if (node.nodeType !== 'request') {
+      return;
+    }
+
+    try {
+      const request = await api.readRequest(projectPath, node.nodePath);
+      const parentPath = getParentFolderPath(node.nodePath);
+      const siblingRequestNames = getRequestNamesInFolder(collections[projectPath]?.treeData ?? [], parentPath);
+      const name = buildDuplicateName(request.name, siblingRequestNames, t('sidebar.duplicateCopySuffix'));
+      const now = new Date().toISOString();
+      const duplicatedRequest = {
+        ...request,
+        id: crypto.randomUUID(),
+        name,
+        meta: {
+          created_at: now,
+          updated_at: now,
+        },
+      };
+
+      const duplicatePath = parentPath === '.' ? `${name}.req.json` : `${parentPath}/${name}.req.json`;
+      await api.saveRequest(projectPath, duplicatePath, duplicatedRequest);
+      await refreshTree(projectPath);
+      message.success(t('sidebar.requestDuplicated'));
+    } catch (e) {
+      message.error(t('sidebar.failedDuplicateRequest', { error: e }));
     }
   };
 
@@ -344,6 +469,12 @@ const Sidebar: React.FC<SidebarProps> = ({ activeNavItem }) => {
       );
     }
 
+    if (node.nodeType === 'request') {
+      items.push(
+        { key: 'duplicate', label: t('sidebar.duplicate'), icon: <CopyOutlined /> },
+      );
+    }
+
     items.push(
       { key: 'rename', label: t('sidebar.rename'), icon: <EditOutlined /> },
       { key: 'delete', label: t('sidebar.delete'), icon: <DeleteOutlined />, danger: true },
@@ -362,6 +493,9 @@ const Sidebar: React.FC<SidebarProps> = ({ activeNavItem }) => {
         break;
       case 'import-file':
         handleContextMenuImportFile(node, projectPath);
+        break;
+      case 'duplicate':
+        void handleContextMenuDuplicateRequest(node, projectPath);
         break;
       case 'rename':
         handleContextMenuRename(node, projectPath);
@@ -433,6 +567,11 @@ const Sidebar: React.FC<SidebarProps> = ({ activeNavItem }) => {
   };
 
   const renderTreeTitle = (node: AntTreeNode, projectPath: string) => {
+    const actionMenu: MenuProps = {
+      items: getContextMenuItems(node),
+      onClick: ({ key }) => handleContextMenuClick(String(key), node, projectPath),
+    };
+
     const titleContent = node.isLeaf && node.method ? (
       <span className="tree-node-title">
         <span className="method-tag" style={{ color: getHttpMethodColor(node.method) }}>
@@ -442,19 +581,28 @@ const Sidebar: React.FC<SidebarProps> = ({ activeNavItem }) => {
       </span>
     ) : (
       <span className="tree-node-title">
+        <FolderIcon className="tree-folder-icon" />
         <span className="node-name">{node.title}</span>
       </span>
     );
 
     return (
-      <Dropdown
-        menu={{
-          items: getContextMenuItems(node),
-          onClick: ({ key }) => handleContextMenuClick(String(key), node, projectPath),
-        }}
-        trigger={['contextMenu']}
-      >
-        <span className="tree-title-wrapper">{titleContent}</span>
+      <Dropdown menu={actionMenu} trigger={['contextMenu']}>
+        <span className="tree-title-wrapper">
+          <span className="tree-title-main">{titleContent}</span>
+          <Dropdown menu={actionMenu} trigger={['click']}>
+            <button
+              type="button"
+              className="tree-row-actions-trigger"
+              aria-label={t(node.nodeType === 'folder' ? 'sidebar.folderActions' : 'sidebar.requestActions')}
+              onClick={(event) => event.stopPropagation()}
+              onMouseDown={(event) => event.stopPropagation()}
+              onKeyDown={(event) => event.stopPropagation()}
+            >
+              <MoreOutlined />
+            </button>
+          </Dropdown>
+        </span>
       </Dropdown>
     );
   };
@@ -469,7 +617,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeNavItem }) => {
 
   const filteredCollections = Object.entries(collections)
     .map(([projectPath, entry]) => {
-      const antTree = convertToAntTree(entry.treeData);
+      const antTree = convertToAntTree(entry.treeData, projectPath);
       const filteredTree = normalizedSearchValue ? filterTree(antTree) : antTree;
 
       return {
@@ -486,6 +634,135 @@ const Sidebar: React.FC<SidebarProps> = ({ activeNavItem }) => {
     label: env.name,
     value: env.id,
   }));
+  const activeProjectEnvironment = currentCollection?.activeEnvironment
+    ? currentCollection.environments.find((environment) => environment.id === currentCollection.activeEnvironment) ?? null
+    : null;
+  const isEnvironmentActionDisabled = !currentCollectionPath || !activeProjectEnvironment;
+
+  const closeEnvironmentRenameModal = () => {
+    setEnvironmentRenameState(null);
+  };
+
+  const openEnvironmentRenameModal = () => {
+    if (!currentCollectionPath || !activeProjectEnvironment) {
+      return;
+    }
+
+    setEnvironmentRenameState({
+      projectPath: currentCollectionPath,
+      envId: activeProjectEnvironment.id,
+      value: activeProjectEnvironment.name,
+    });
+  };
+
+  const handleConfirmEnvironmentRename = async () => {
+    if (!environmentRenameState) {
+      return;
+    }
+
+    const name = environmentRenameState.value.trim();
+    if (!name) {
+      message.warning(t('environment.enterName'));
+      return;
+    }
+
+    const collectionEntry = collections[environmentRenameState.projectPath];
+    const environment = collectionEntry?.environments.find((item) => item.id === environmentRenameState.envId);
+    if (!environment) {
+      closeEnvironmentRenameModal();
+      return;
+    }
+
+    if (name === environment.name) {
+      closeEnvironmentRenameModal();
+      return;
+    }
+
+    try {
+      setActiveProject(environmentRenameState.projectPath);
+      await saveEnvironment(environmentRenameState.projectPath, { ...environment, name });
+      closeEnvironmentRenameModal();
+      message.success(t('environment.saved'));
+    } catch {
+      message.error(t('environment.failedSave'));
+    }
+  };
+
+  const handleDuplicateActiveEnvironment = async () => {
+    if (!currentCollectionPath || !activeProjectEnvironment) {
+      return;
+    }
+
+    const name = buildDuplicateEnvironmentName(
+      activeProjectEnvironment.name,
+      currentCollection?.environments ?? [],
+      t('environment.duplicateCopySuffix'),
+    );
+    const duplicateEnvironment: Environment = {
+      id: createEnvironmentId(name),
+      name,
+      variables: { ...activeProjectEnvironment.variables },
+    };
+
+    try {
+      setActiveProject(currentCollectionPath);
+      await saveEnvironment(currentCollectionPath, duplicateEnvironment);
+      await setActiveEnvironment(currentCollectionPath, duplicateEnvironment.id);
+      message.success(t('environment.saved'));
+    } catch {
+      message.error(t('environment.failedSave'));
+    }
+  };
+
+  const handleDeleteActiveEnvironment = () => {
+    if (!currentCollectionPath || !activeProjectEnvironment) {
+      return;
+    }
+
+    Modal.confirm({
+      title: t('environment.deleteConfirm'),
+      content: t('environment.deleteMessage', { name: activeProjectEnvironment.name }),
+      okText: t('environment.delete'),
+      okType: 'danger',
+      cancelText: t('environment.cancel'),
+      onOk: async () => {
+        try {
+          setActiveProject(currentCollectionPath);
+          await deleteEnvironment(currentCollectionPath, activeProjectEnvironment.id);
+          message.success(t('environment.deleted'));
+        } catch {
+          message.error(t('environment.failedDelete'));
+        }
+      },
+    });
+  };
+
+  const environmentActionMenu: MenuProps = {
+    items: [
+      { key: 'rename', label: t('environment.rename') },
+      { key: 'duplicate', label: t('environment.duplicate') },
+      { key: 'delete', label: t('environment.delete'), danger: true },
+    ],
+    onClick: ({ key }) => {
+      if (isEnvironmentActionDisabled) {
+        return;
+      }
+
+      switch (key) {
+        case 'rename':
+          openEnvironmentRenameModal();
+          break;
+        case 'duplicate':
+          void handleDuplicateActiveEnvironment();
+          break;
+        case 'delete':
+          handleDeleteActiveEnvironment();
+          break;
+        default:
+          break;
+      }
+    },
+  };
 
   const handleOpenEnvironmentManager = () => {
     if (currentCollectionPath) {
@@ -564,6 +841,16 @@ const Sidebar: React.FC<SidebarProps> = ({ activeNavItem }) => {
               });
             }}
           />
+          <Dropdown menu={environmentActionMenu} trigger={['click']} disabled={isEnvironmentActionDisabled}>
+            <Button
+              type="text"
+              className="env-selector-actions-trigger"
+              icon={<MoreOutlined />}
+              aria-label={t('environment.rowActions')}
+              title={t('environment.rowActions')}
+              disabled={isEnvironmentActionDisabled}
+            />
+          </Dropdown>
           <Button
             type="text"
             icon={<SettingOutlined />}
@@ -585,33 +872,46 @@ const Sidebar: React.FC<SidebarProps> = ({ activeNavItem }) => {
             filteredCollections.map(({ projectPath, entry, treeNodes }) => {
               const isActiveCollection = activeProjectPath === projectPath;
               const isExpanded = !entry.isCollapsed;
+              const collectionActionMenu: MenuProps = {
+                items: getCollectionHeaderMenuItems(projectPath),
+                onClick: ({ key }) => handleCollectionHeaderMenuClick(String(key), projectPath),
+              };
 
               return (
                 <div key={projectPath} className="collection-section">
-                  <Dropdown
-                    menu={{
-                      items: getCollectionHeaderMenuItems(projectPath),
-                      onClick: ({ key }) => handleCollectionHeaderMenuClick(String(key), projectPath),
-                    }}
-                    trigger={['contextMenu']}
-                  >
-                    <button
-                      type="button"
-                      className={`collection-header ${isActiveCollection ? 'active' : ''}`}
-                      onClick={() => {
-                        if (activeProjectPath !== projectPath) {
-                          setActiveProject(projectPath);
-                          if (entry.isCollapsed) {
-                            toggleCollapse(projectPath);
+                  <Dropdown menu={collectionActionMenu} trigger={['contextMenu']}>
+                    <div className={`collection-header ${isActiveCollection ? 'active' : ''}`}>
+                      <button
+                        type="button"
+                        className="collection-header-main"
+                        onClick={() => {
+                          if (activeProjectPath !== projectPath) {
+                            setActiveProject(projectPath);
+                            if (entry.isCollapsed) {
+                              toggleCollapse(projectPath);
+                            }
+                            return;
                           }
-                          return;
-                        }
-                        toggleCollapse(projectPath);
-                      }}
-                    >
-                      <ChevronDownIcon className={`collapse-icon ${isExpanded ? 'expanded' : ''}`} />
-                      <span className="collection-name">{entry.project.name}</span>
-                    </button>
+                          toggleCollapse(projectPath);
+                        }}
+                      >
+                        <ChevronDownIcon className={`collapse-icon ${isExpanded ? 'expanded' : ''}`} />
+                        <span className="collection-name">{entry.project.name}</span>
+                      </button>
+
+                      <Dropdown menu={collectionActionMenu} trigger={['click']}>
+                        <button
+                          type="button"
+                          className="collection-actions-trigger"
+                          aria-label={t('sidebar.collectionActions')}
+                          onClick={(event) => event.stopPropagation()}
+                          onMouseDown={(event) => event.stopPropagation()}
+                          onKeyDown={(event) => event.stopPropagation()}
+                        >
+                          <MoreOutlined />
+                        </button>
+                      </Dropdown>
+                    </div>
                   </Dropdown>
 
                   {!entry.isCollapsed && (
@@ -739,12 +1039,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeNavItem }) => {
         title={t('sidebar.renameTitle')}
         open={renameModalVisible}
         onOk={handleRename}
-        onCancel={() => {
-          setRenameModalVisible(false);
-          setRenameNodePath('');
-          setRenameNewName('');
-          setRenameNodeProjectPath('');
-        }}
+        onCancel={resetRenameState}
         okText={t('sidebar.rename')}
         cancelText={t('sidebar.cancel')}
       >
@@ -753,6 +1048,23 @@ const Sidebar: React.FC<SidebarProps> = ({ activeNavItem }) => {
           value={renameNewName}
           onChange={(e) => setRenameNewName(e.target.value)}
           onPressEnter={handleRename}
+          autoFocus
+        />
+      </Modal>
+
+      <Modal
+        title={t('environment.renameTitle')}
+        open={Boolean(environmentRenameState)}
+        onOk={() => void handleConfirmEnvironmentRename()}
+        onCancel={closeEnvironmentRenameModal}
+        okText={t('environment.save')}
+        cancelText={t('environment.cancel')}
+      >
+        <Input
+          value={environmentRenameState?.value ?? ''}
+          onChange={(event) => setEnvironmentRenameState((current) => (current ? { ...current, value: event.target.value } : current))}
+          onPressEnter={() => void handleConfirmEnvironmentRename()}
+          placeholder={t('environment.envNamePlaceholder')}
           autoFocus
         />
       </Modal>

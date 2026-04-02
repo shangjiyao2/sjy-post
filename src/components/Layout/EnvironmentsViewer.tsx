@@ -1,16 +1,17 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Empty, Modal, message } from 'antd';
-import { PlusOutlined } from '@ant-design/icons';
+import { Empty, Dropdown, Modal, message } from 'antd';
+import type { MenuProps } from 'antd';
+import { MoreOutlined, PlusOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { SearchIcon } from '../Sidebar/TreeIcons';
 import { useGlobalEnvironmentStore } from '../../stores/globalEnvironmentStore';
 import { useProjectStore } from '../../stores/projectStore';
 import { useHorizontalPaneResize } from '../../hooks/useHorizontalPaneResize';
-import { createEnvironmentId, formatProjectPathLabel, type Environment } from '../../types';
-
-type TranslateFn = ReturnType<typeof useTranslation>['t'];
+import { buildDuplicateEnvironmentName, createEnvironmentId, formatProjectPathLabel, type Environment } from '../../types';
 import './EnvironmentsViewer.css';
 import './SplitPaneDivider.css';
+
+type TranslateFn = ReturnType<typeof useTranslation>['t'];
 
 type EnvScope = 'global' | 'project';
 
@@ -26,6 +27,11 @@ type EnvRow = {
 type VarRow = { id: string; key: string; value: string };
 
 type SelectedEnvRef = { scope: EnvScope; id: string; projectPath?: string };
+
+type NameModalState = {
+  ref: SelectedEnvRef;
+  value: string;
+};
 
 type ProjectGroup = {
   projectPath: string;
@@ -161,6 +167,9 @@ function EnvironmentRow({
   isSelected,
   onSelect,
   onToggleSelection,
+  onRename,
+  onDuplicate,
+  onDelete,
   t,
 }: Readonly<{
   row: EnvRow;
@@ -168,8 +177,36 @@ function EnvironmentRow({
   isSelected: boolean;
   onSelect: () => void;
   onToggleSelection: () => void;
+  onRename: () => void;
+  onDuplicate: () => void;
+  onDelete: () => void;
   t: TranslateFn;
 }>) {
+  const actionMenu: MenuProps = {
+    items: [
+      { key: 'rename', label: t('environment.rename') },
+      { key: 'duplicate', label: t('environment.duplicate') },
+      { key: 'delete', label: t('environment.delete'), danger: true },
+    ],
+    onClick: ({ key, domEvent }) => {
+      domEvent.stopPropagation();
+
+      switch (key) {
+        case 'rename':
+          onRename();
+          break;
+        case 'duplicate':
+          onDuplicate();
+          break;
+        case 'delete':
+          onDelete();
+          break;
+        default:
+          break;
+      }
+    },
+  };
+
   return (
     <div className={`env-row ${isSelected ? 'selected' : ''}`}>
       <SelectionCheckbox checked={isChecked} label={row.name} onChange={onToggleSelection} />
@@ -179,6 +216,19 @@ function EnvironmentRow({
         </div>
         {row.isActive && <span className="env-row-badge">{t('environment.defaultEnvironment')}</span>}
       </button>
+      <Dropdown menu={actionMenu} trigger={['click']}>
+        <button
+          type="button"
+          className="env-row-actions-trigger"
+          aria-label={t('environment.rowActions')}
+          title={t('environment.rowActions')}
+          onClick={(event) => event.stopPropagation()}
+          onMouseDown={(event) => event.stopPropagation()}
+          onKeyDown={(event) => event.stopPropagation()}
+        >
+          <MoreOutlined />
+        </button>
+      </Dropdown>
     </div>
   );
 }
@@ -209,6 +259,9 @@ const EnvironmentsViewer: React.FC = () => {
   const [createScope, setCreateScope] = useState<EnvScope>('global');
   const [createName, setCreateName] = useState('');
   const [createProjectPath, setCreateProjectPath] = useState<string | null>(null);
+  const [nameModalState, setNameModalState] = useState<NameModalState | null>(null);
+  const [pendingUnsavedAction, setPendingUnsavedAction] = useState<(() => Promise<void> | void) | null>(null);
+  const [isUnsavedGuardVisible, setIsUnsavedGuardVisible] = useState(false);
   const {
     containerRef,
     paneStyle,
@@ -332,6 +385,8 @@ const EnvironmentsViewer: React.FC = () => {
   const selectedProjectEntry = selectedRef?.scope === 'project' && selectedRef.projectPath
     ? collections[selectedRef.projectPath]
     : undefined;
+  const draftVariables = useMemo(() => buildVariables(localVars), [localVars]);
+  const hasUnsavedChanges = selectedEnv ? !sameVariables(draftVariables, selectedEnv.variables) : false;
 
   useEffect(() => {
     if (selectedRef && selectedEnv) {
@@ -406,7 +461,46 @@ const EnvironmentsViewer: React.FC = () => {
     setSelectedKeys(new Set());
   };
 
-  const handleSelect = async (ref: SelectedEnvRef) => {
+  const getEnvironmentByRef = (ref: SelectedEnvRef): Environment | null => {
+    if (ref.scope === 'global') {
+      return globalEnvironments.find((environment) => environment.id === ref.id) ?? null;
+    }
+
+    if (!ref.projectPath) {
+      return null;
+    }
+
+    return collections[ref.projectPath]?.environments.find((environment) => environment.id === ref.id) ?? null;
+  };
+
+  const getEnvironmentListByRef = (ref: SelectedEnvRef): Environment[] => {
+    if (ref.scope === 'global') {
+      return globalEnvironments;
+    }
+
+    if (!ref.projectPath) {
+      return [];
+    }
+
+    return collections[ref.projectPath]?.environments ?? [];
+  };
+
+  const closeUnsavedGuard = () => {
+    setIsUnsavedGuardVisible(false);
+    setPendingUnsavedAction(null);
+  };
+
+  const runWithUnsavedGuard = (action: () => Promise<void> | void) => {
+    if (!hasUnsavedChanges) {
+      void action();
+      return;
+    }
+
+    setPendingUnsavedAction(() => action);
+    setIsUnsavedGuardVisible(true);
+  };
+
+  const executeSelect = async (ref: SelectedEnvRef) => {
     setSelectedRef(ref);
 
     if (ref.scope === 'global') {
@@ -424,6 +518,15 @@ const EnvironmentsViewer: React.FC = () => {
     if (ref.id !== currentActiveEnvironmentId) {
       await setActiveProjectEnvironment(ref.projectPath, ref.id);
     }
+  };
+
+  const handleSelect = (ref: SelectedEnvRef) => {
+    if (isSameSelection(selectedRef, ref)) {
+      void executeSelect(ref);
+      return;
+    }
+
+    runWithUnsavedGuard(() => executeSelect(ref));
   };
 
   const resetCreateForm = () => {
@@ -482,26 +585,47 @@ const EnvironmentsViewer: React.FC = () => {
     setLocalVars((prev) => prev.filter((row) => row.id !== id));
   };
 
-  const handleSaveSelected = async () => {
+  const handleSaveSelected = async (): Promise<boolean> => {
     if (!selectedRef || !selectedEnv) {
-      return;
+      return true;
     }
 
-    const vars = buildVariables(localVars);
-    if (sameVariables(vars, selectedEnv.variables)) {
-      return;
+    if (!hasUnsavedChanges) {
+      return true;
     }
 
     try {
       if (selectedRef.scope === 'global') {
-        await saveGlobalEnvironment({ ...selectedEnv, variables: vars });
+        await saveGlobalEnvironment({ ...selectedEnv, variables: draftVariables });
       } else if (selectedRef.projectPath) {
-        await saveProjectEnvironment(selectedRef.projectPath, { ...selectedEnv, variables: vars });
+        await saveProjectEnvironment(selectedRef.projectPath, { ...selectedEnv, variables: draftVariables });
       }
       message.success(t('environment.saved'));
+      return true;
     } catch {
       message.error(t('environment.failedSave'));
+      return false;
     }
+  };
+
+  const handleUnsavedGuardContinue = async (shouldSave: boolean) => {
+    const action = pendingUnsavedAction;
+    if (!action) {
+      closeUnsavedGuard();
+      return;
+    }
+
+    if (shouldSave) {
+      const saved = await handleSaveSelected();
+      if (!saved) {
+        return;
+      }
+    } else if (selectedEnv) {
+      setLocalVars(buildVarRows(selectedEnv));
+    }
+
+    closeUnsavedGuard();
+    await action();
   };
 
   const deleteEnvironmentRefs = async (refs: SelectedEnvRef[]) => {
@@ -524,11 +648,14 @@ const EnvironmentsViewer: React.FC = () => {
     }
   };
 
-  const confirmDelete = (refs: SelectedEnvRef[], count: number) => {
+  const confirmDelete = (refs: SelectedEnvRef[]) => {
+    const count = refs.length;
+    const targetEnv = count === 1 ? getEnvironmentByRef(refs[0]) : null;
+
     Modal.confirm({
       title: t('environment.deleteConfirm'),
       content: count === 1
-        ? t('environment.deleteMessage', { name: selectedEnv?.name ?? '-' })
+        ? t('environment.deleteMessage', { name: targetEnv?.name ?? '-' })
         : t('environment.batchDeleteMessage', { count }),
       okText: t('environment.delete'),
       cancelText: t('environment.cancel'),
@@ -549,7 +676,9 @@ const EnvironmentsViewer: React.FC = () => {
       return;
     }
 
-    confirmDelete([selectedRef], 1);
+    runWithUnsavedGuard(() => {
+      confirmDelete([selectedRef]);
+    });
   };
 
   const handleBatchDelete = () => {
@@ -557,7 +686,106 @@ const EnvironmentsViewer: React.FC = () => {
       return;
     }
 
-    confirmDelete(selectedBatchRefs, selectedBatchRefs.length);
+    runWithUnsavedGuard(() => {
+      confirmDelete(selectedBatchRefs);
+    });
+  };
+
+  const openRenameModal = (ref: SelectedEnvRef) => {
+    const environment = getEnvironmentByRef(ref);
+    if (!environment) {
+      return;
+    }
+
+    setNameModalState({
+      ref,
+      value: environment.name,
+    });
+  };
+
+  const handleRenameRef = (ref: SelectedEnvRef) => {
+    runWithUnsavedGuard(() => {
+      openRenameModal(ref);
+    });
+  };
+
+  const handleRenameConfirm = async () => {
+    if (!nameModalState) {
+      return;
+    }
+
+    const name = nameModalState.value.trim();
+    if (!name) {
+      message.warning(t('environment.enterName'));
+      return;
+    }
+
+    const environment = getEnvironmentByRef(nameModalState.ref);
+    if (!environment) {
+      setNameModalState(null);
+      return;
+    }
+
+    if (name === environment.name) {
+      setNameModalState(null);
+      return;
+    }
+
+    try {
+      if (nameModalState.ref.scope === 'global') {
+        await saveGlobalEnvironment({ ...environment, name });
+      } else if (nameModalState.ref.projectPath) {
+        await saveProjectEnvironment(nameModalState.ref.projectPath, { ...environment, name });
+      }
+
+      setNameModalState(null);
+      message.success(t('environment.saved'));
+    } catch {
+      message.error(t('environment.failedSave'));
+    }
+  };
+
+  const handleDuplicateRef = (ref: SelectedEnvRef) => {
+    runWithUnsavedGuard(async () => {
+      const environment = getEnvironmentByRef(ref);
+      if (!environment) {
+        return;
+      }
+
+      const name = buildDuplicateEnvironmentName(
+        environment.name,
+        getEnvironmentListByRef(ref),
+        t('environment.duplicateCopySuffix'),
+      );
+      const duplicateEnvironment: Environment = {
+        id: createEnvironmentId(name),
+        name,
+        variables: { ...environment.variables },
+      };
+
+      try {
+        if (ref.scope === 'global') {
+          await saveGlobalEnvironment(duplicateEnvironment);
+          await setActiveGlobalEnvironment(duplicateEnvironment.id);
+          setSelectedRef({ scope: 'global', id: duplicateEnvironment.id });
+        } else if (ref.projectPath) {
+          await saveProjectEnvironment(ref.projectPath, duplicateEnvironment);
+          await setActiveProjectEnvironment(ref.projectPath, duplicateEnvironment.id);
+          setSelectedRef({ scope: 'project', id: duplicateEnvironment.id, projectPath: ref.projectPath });
+        }
+
+        setSelectedKeys(new Set());
+        message.success(t('environment.saved'));
+      } catch {
+        message.error(t('environment.failedSave'));
+      }
+    });
+  };
+
+  const handleDeleteRef = (ref: SelectedEnvRef) => {
+    runWithUnsavedGuard(() => {
+      confirmDelete([ref]);
+    });
   };
 
   const detailChipText = buildDetailChipText(t, selectedEnv, selectedRef);
@@ -705,8 +933,11 @@ const EnvironmentsViewer: React.FC = () => {
                   row={row}
                   isChecked={selectedKeys.has(row.selectionKey)}
                   isSelected={isSameSelection(selectedRef, rowRef)}
-                  onSelect={() => void handleSelect(rowRef)}
+                  onSelect={() => handleSelect(rowRef)}
                   onToggleSelection={() => handleToggleRowSelection(row.selectionKey)}
+                  onRename={() => handleRenameRef(rowRef)}
+                  onDuplicate={() => handleDuplicateRef(rowRef)}
+                  onDelete={() => handleDeleteRef(rowRef)}
                   t={t}
                 />
               );
@@ -739,8 +970,11 @@ const EnvironmentsViewer: React.FC = () => {
                         row={row}
                         isChecked={selectedKeys.has(row.selectionKey)}
                         isSelected={isSameSelection(selectedRef, rowRef)}
-                        onSelect={() => void handleSelect(rowRef)}
+                        onSelect={() => handleSelect(rowRef)}
                         onToggleSelection={() => handleToggleRowSelection(row.selectionKey)}
+                        onRename={() => handleRenameRef(rowRef)}
+                        onDuplicate={() => handleDuplicateRef(rowRef)}
+                        onDelete={() => handleDeleteRef(rowRef)}
                         t={t}
                       />
                     );
@@ -837,6 +1071,48 @@ const EnvironmentsViewer: React.FC = () => {
           </div>
         )}
       </div>
+
+      <Modal
+        title={t('environment.renameTitle')}
+        open={Boolean(nameModalState)}
+        onOk={() => void handleRenameConfirm()}
+        onCancel={() => setNameModalState(null)}
+        okText={t('environment.save')}
+        cancelText={t('environment.cancel')}
+      >
+        <input
+          className="env-field-input"
+          value={nameModalState?.value ?? ''}
+          onChange={(event) => setNameModalState((current) => (current ? { ...current, value: event.target.value } : current))}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter') {
+              event.preventDefault();
+              void handleRenameConfirm();
+            }
+          }}
+          placeholder={t('environment.envNamePlaceholder')}
+          autoFocus
+        />
+      </Modal>
+
+      <Modal
+        title={t('environment.unsavedChangesTitle')}
+        open={isUnsavedGuardVisible}
+        onCancel={closeUnsavedGuard}
+        footer={[
+          <button type="button" className="env-chip" onClick={closeUnsavedGuard} key="cancel">
+            {t('environment.cancel')}
+          </button>,
+          <button type="button" className="env-chip" onClick={() => void handleUnsavedGuardContinue(false)} key="discard">
+            {t('environment.discard')}
+          </button>,
+          <button type="button" className="env-chip active" onClick={() => void handleUnsavedGuardContinue(true)} key="save">
+            {t('environment.save')}
+          </button>,
+        ]}
+      >
+        <div className="env-modal-copy">{t('environment.unsavedChangesMessage', { name: selectedEnv?.name ?? '-' })}</div>
+      </Modal>
     </div>
   );
 };

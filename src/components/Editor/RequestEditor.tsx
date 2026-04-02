@@ -1,7 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Input, Select, Button, Tabs, Table, Space, Radio, Form, Checkbox } from 'antd';
-import type { RadioChangeEvent } from 'antd';
+import { Input, Select, Button, Tabs, Table, Space, Radio, Form, Checkbox, message, type InputRef, type RadioChangeEvent } from 'antd';
 import { SendOutlined, SaveOutlined, PlusOutlined, DeleteOutlined, UploadOutlined } from '@ant-design/icons';
 import type { RequestFile, HttpMethod, KeyValueItem, AuthConfig, Assertion, AssertionType, AssertionOperator } from '../../types';
 import { HTTP_METHODS } from '../../types';
@@ -47,6 +46,7 @@ interface RequestEditorProps {
   onChange: (updates: Partial<RequestFile>) => void;
   onSend: () => void;
   onSave?: () => void;
+  onRename?: (newName: string) => Promise<void>;
   variables?: Record<string, string>;
 }
 
@@ -68,15 +68,34 @@ const RequestEditor: React.FC<RequestEditorProps> = ({
   onChange,
   onSend,
   onSave,
+  onRename,
   variables,
 }) => {
   const { t } = useTranslation();
   const [activeBodyTab, setActiveBodyTab] = useState(() => request.body.type === 'none' ? 'none' : request.body.type);
+  const [isRenamingTitle, setIsRenamingTitle] = useState(false);
+  const [titleDraft, setTitleDraft] = useState(title);
+  const [isSubmittingRename, setIsSubmittingRename] = useState(false);
+  const titleInputRef = useRef<InputRef>(null);
+  const cancelRenameRef = useRef(false);
 
   // Sync body tab when switching between requests
-  React.useEffect(() => {
+  useEffect(() => {
     setActiveBodyTab(request.body.type === 'none' ? 'none' : request.body.type);
   }, [request.id]);
+
+  useEffect(() => {
+    if (!isRenamingTitle) {
+      setTitleDraft(title);
+    }
+  }, [isRenamingTitle, title]);
+
+  useEffect(() => {
+    if (isRenamingTitle && titleInputRef.current) {
+      titleInputRef.current.focus();
+      titleInputRef.current.select();
+    }
+  }, [isRenamingTitle]);
 
   const handleMethodChange = (method: HttpMethod) => {
     onChange({ method });
@@ -136,10 +155,80 @@ const RequestEditor: React.FC<RequestEditorProps> = ({
   const headersCount = Object.keys(request.headers).length;
   const assertionCount = request.assertions.length;
 
+  const startRename = () => {
+    if (!onRename) return;
+    setTitleDraft(title);
+    cancelRenameRef.current = false;
+    setIsRenamingTitle(true);
+  };
+
+  const cancelRename = () => {
+    setTitleDraft(title);
+    setIsRenamingTitle(false);
+    setIsSubmittingRename(false);
+  };
+
+  const confirmRename = async () => {
+    if (!onRename || cancelRenameRef.current) {
+      cancelRenameRef.current = false;
+      setIsRenamingTitle(false);
+      return;
+    }
+
+    try {
+      setIsSubmittingRename(true);
+      await onRename(titleDraft);
+      setIsRenamingTitle(false);
+    } catch (error) {
+      message.error(error instanceof Error ? error.message : String(error));
+      requestAnimationFrame(() => {
+        titleInputRef.current?.focus();
+        titleInputRef.current?.select();
+      });
+    } finally {
+      setIsSubmittingRename(false);
+    }
+  };
+
   return (
     <div className="request-editor">
       <div className="request-editor-header">
-        <span className="request-editor-title">{title}</span>
+        {isRenamingTitle ? (
+          <Input
+            ref={titleInputRef}
+            size="small"
+            value={titleDraft}
+            onChange={(e) => setTitleDraft(e.target.value)}
+            onBlur={() => {
+              void confirmRename();
+            }}
+            onPressEnter={(e) => e.currentTarget.blur()}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') {
+                cancelRenameRef.current = true;
+                e.preventDefault();
+                e.stopPropagation();
+                cancelRename();
+              }
+            }}
+            className="request-editor-title-input"
+            disabled={isSubmittingRename}
+          />
+        ) : (
+          <button
+            type="button"
+            className="request-editor-title-button"
+            onDoubleClick={startRename}
+            onKeyDown={(e) => {
+              if ((e.key === 'Enter' || e.key === ' ') && onRename) {
+                e.preventDefault();
+                startRename();
+              }
+            }}
+          >
+            <span className="request-editor-title">{title}</span>
+          </button>
+        )}
       </div>
 
       {/* URL Bar */}
@@ -357,7 +446,7 @@ const KeyValueEditor: React.FC<KeyValueEditorProps> = ({ items, onChange, placeh
           },
         ]}
       />
-      {renderCompactAddButton(t('editor.add'), addItem, 'parameter')}
+      {renderCompactAddButton(t('editor.addParameter'), addItem, 'parameter')}
     </div>
   );
 };
@@ -509,7 +598,7 @@ const FormKeyValueEditor: React.FC<FormKeyValueEditorProps> = ({ items, onChange
           },
         ]}
       />
-      {renderCompactAddButton(t('editor.add'), addItem, 'parameter')}
+      {renderCompactAddButton(t('editor.addParameter'), addItem, 'parameter')}
     </div>
   );
 };

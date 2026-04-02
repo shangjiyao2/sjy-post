@@ -12,51 +12,91 @@
 
 .title-bar-right {
   position: absolute;
-  right: 24px;
-  top: 6px;
+  right: 0;
+  top: 0;
   display: flex;
   align-items: center;
+  height: 100%;
   gap: 0;
   -webkit-app-region: no-drag;
 }
 
 .window-btn {
-  width: 28px;
-  height: 18px;
+  width: 46px;
+  height: 100%;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border: none;
   background: transparent;
   padding: 0;
-  border-radius: 6px;
+  border-radius: 0;
   cursor: pointer;
+  color: var(--window-icon-color, #4c556a);
+  transition: background-color 0.12s ease-out, color 0.12s ease-out;
 }
 
 .window-btn:hover {
   background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.window-btn:active {
+  background: var(--bg-active);
+  color: var(--text-primary);
+}
+
+.window-btn.close:hover {
+  background: var(--color-error);
+  color: #ffffff;
+}
+
+.window-btn.close:active {
+  background: #dc2626;
+  color: #ffffff;
 }
 
 .window-icon {
-  display: inline-block;
+  position: relative;
+  display: inline-flex;
+  width: 10px;
+  height: 10px;
+  flex-shrink: 0;
 }
 
-.window-icon.minimize {
+.window-btn.minimize .window-icon {
   width: 10px;
-  height: 1px;
-  background: var(--window-icon-color, #4c556a);
+}
+
+.window-btn.maximize .window-icon {
+  width: 10px;
+  height: 10px;
+}
+
+.window-btn.close .window-icon {
+  width: 10px;
+  height: 10px;
+}
+
+.window-icon.minimize::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 62%;
+  height: 1.4px;
+  background: currentColor;
+  transform: translateY(-50%);
 }
 
 .window-icon.maximize {
-  width: 9px;
-  height: 9px;
-  border: 1px solid var(--window-icon-color, #4c556a);
   box-sizing: border-box;
+  border: 1.25px solid currentColor;
+  border-radius: 1px;
 }
 
 .window-icon.close {
-  width: 10px;
-  height: 10px;
-  mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12" stroke="black" stroke-width="2" stroke-linecap="round"/></svg>') center/contain no-repeat;
-  background: var(--window-icon-color, #4c556a);
+  -webkit-mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12" stroke="black" stroke-width="1.7" stroke-linecap="round"/></svg>') center/contain no-repeat;
+  mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12" stroke="black" stroke-width="1.7" stroke-linecap="round"/></svg>') center/contain no-repeat;
+  background: currentColor;
 }

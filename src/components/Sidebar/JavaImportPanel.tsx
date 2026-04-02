@@ -221,7 +221,7 @@ const JavaImportPanel: React.FC = () => {
           setDeleteConfirmVisible(false);
           setProjectToDelete(null);
         }}
-        okText={t('javaImport.confirm')}
+        okText={t('javaImport.delete')}
         cancelText={t('javaImport.cancel')}
         okButtonProps={{ danger: true }}
       >

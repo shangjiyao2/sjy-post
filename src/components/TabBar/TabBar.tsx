@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Tabs, Input } from 'antd';
+import { Tabs, Input, message } from 'antd';
 import type { InputRef } from 'antd';
 import { ApiOutlined } from '@ant-design/icons';
 import { useRequestStore } from '../../stores/requestStore';
@@ -15,7 +15,9 @@ const TabBar: React.FC = () => {
   const renameTab = useRequestStore((s) => s.renameTab);
   const [editingTabId, setEditingTabId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState('');
+  const [isSubmittingRename, setIsSubmittingRename] = useState(false);
   const inputRef = useRef<InputRef>(null);
+  const cancelRenameRef = useRef(false);
 
   // Focus input when editing starts
   useEffect(() => {
@@ -36,20 +38,45 @@ const TabBar: React.FC = () => {
   const handleDoubleClick = (tabId: string, currentTitle: string) => {
     setEditingTabId(tabId);
     setEditingName(currentTitle);
+    cancelRenameRef.current = false;
   };
 
-  const handleRenameConfirm = (tabId: string) => {
-    const trimmedName = editingName.trim();
-    if (trimmedName && trimmedName !== tabs.find(t => t.id === tabId)?.title) {
-      renameTab(tabId, trimmedName);
+  const handleRenameConfirm = async (tabId: string) => {
+    if (cancelRenameRef.current) {
+      cancelRenameRef.current = false;
+      setEditingTabId(null);
+      setEditingName('');
+      setIsSubmittingRename(false);
+      return;
     }
-    setEditingTabId(null);
-    setEditingName('');
+
+    const trimmedName = editingName.trim();
+    if (trimmedName === tabs.find(t => t.id === tabId)?.title) {
+      setEditingTabId(null);
+      setEditingName('');
+      return;
+    }
+
+    try {
+      setIsSubmittingRename(true);
+      await renameTab(tabId, editingName);
+      setEditingTabId(null);
+      setEditingName('');
+    } catch (error) {
+      message.error(error instanceof Error ? error.message : String(error));
+      requestAnimationFrame(() => {
+        inputRef.current?.focus();
+        inputRef.current?.select();
+      });
+    } finally {
+      setIsSubmittingRename(false);
+    }
   };
 
   const handleRenameCancel = () => {
     setEditingTabId(null);
     setEditingName('');
+    setIsSubmittingRename(false);
   };
 
   const renderTabLabel = (tab: typeof tabs[0]) => {
@@ -73,16 +100,20 @@ const TabBar: React.FC = () => {
             size="small"
             value={editingName}
             onChange={(e) => setEditingName(e.target.value)}
-            onBlur={() => handleRenameConfirm(tab.id)}
-            onPressEnter={() => handleRenameConfirm(tab.id)}
+            onBlur={() => {
+              void handleRenameConfirm(tab.id);
+            }}
+            onPressEnter={(e) => e.currentTarget.blur()}
             onKeyDown={(e) => {
               if (e.key === 'Escape') {
+                cancelRenameRef.current = true;
                 handleRenameCancel();
               }
               e.stopPropagation();
             }}
             onClick={(e) => e.stopPropagation()}
             style={{ width: 120, height: 20, fontSize: 13 }}
+            disabled={isSubmittingRename}
           />
         </span>
       );

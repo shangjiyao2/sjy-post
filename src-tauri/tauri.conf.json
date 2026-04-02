@@ -40,9 +40,9 @@
   "plugins": {
     "updater": {
       "endpoints": [
-        "https://github.com/<OWNER>/<REPO>/releases/latest/download/latest.json"
+        "https://github.com/shangjiyao2/sjy-post/releases/latest/download/latest.json"
       ],
-      "pubkey": "<PUBKEY>"
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEVBMzQ3NEQ2MUJFQ0U5NTIKUldSUzZld2IxblEwNmhTakovdFVLeGNxaW41ZGVKYThGd0lqRVVmWGhXTlI3bjh6WWJjcnZuSnkK"
     }
   }
 }

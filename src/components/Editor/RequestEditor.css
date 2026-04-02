@@ -20,6 +20,31 @@
   color: var(--text-primary);
 }
 
+.request-editor-title-button {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: text;
+  text-align: left;
+}
+
+.request-editor-title-button:focus-visible {
+  outline: 1px solid var(--border-focus);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+.request-editor-title-input.ant-input {
+  max-width: 240px;
+  padding: 2px 8px;
+  font-size: 14px;
+  font-weight: 700;
+  border-radius: 8px;
+}
+
 .url-bar {
   display: flex;
   align-items: center;
@@ -349,23 +374,44 @@
 }
 
 .editor-table-action-parameter.ant-btn {
-  min-height: 32px;
+  min-height: 36px;
   gap: 8px;
-  padding: 8px 10px;
-  border-radius: 10px;
-  background: var(--surface-1);
+  padding: 8px 4px;
+  border: none;
+  border-radius: 0;
+  background: transparent;
   justify-content: flex-start;
+  color: var(--env-muted-emphasis, var(--text-muted));
+  box-shadow: none;
+  transition:
+    background var(--transition-fast),
+    color var(--transition-fast),
+    transform var(--transition-fast);
 }
 
 .editor-table-action-parameter.ant-btn .anticon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  height: auto;
+  border-radius: 0;
+  background: none;
   color: var(--border-focus);
 }
 
 .editor-table-action-parameter.ant-btn:hover,
 .editor-table-action-parameter.ant-btn:focus {
-  border-color: var(--env-selected-border, var(--border-primary));
-  background: var(--surface-1);
+  border: none;
+  background: transparent;
   color: var(--text-primary);
+  box-shadow: none;
+  transform: none;
+}
+
+.editor-table-action-parameter.ant-btn:active {
+  transform: none;
+  box-shadow: none;
 }
 
 .editor-icon-action.ant-btn {

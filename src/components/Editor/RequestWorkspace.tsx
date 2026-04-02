@@ -44,8 +44,15 @@ const convertToTreeSelect = (nodes: TreeNode[]): TreeSelectNode[] => {
 
 const RequestWorkspace: React.FC = () => {
   const { t } = useTranslation();
-  const { getActiveTab, updateRequest, sendRequest, saveRequest, saveNewRequest } = useRequestStore();
-  const { activeProjectPath, collections, getVariables, refreshTree } = useProjectStore();
+  const activeTab = useRequestStore((state) => state.tabs.find((tab) => tab.id === state.activeTabId) ?? null);
+  const updateRequest = useRequestStore((state) => state.updateRequest);
+  const sendRequest = useRequestStore((state) => state.sendRequest);
+  const saveRequest = useRequestStore((state) => state.saveRequest);
+  const saveNewRequest = useRequestStore((state) => state.saveNewRequest);
+  const renameTab = useRequestStore((state) => state.renameTab);
+  const activeProjectPath = useProjectStore((state) => state.activeProjectPath);
+  const collections = useProjectStore((state) => state.collections);
+  const getVariables = useProjectStore((state) => state.getVariables);
   const { addEntry } = useHistoryStore();
   const [assertResults, setAssertResults] = useState<AssertResult[]>([]);
 
@@ -115,8 +122,6 @@ const RequestWorkspace: React.FC = () => {
     document.addEventListener('mousemove', onMouseMove);
     document.addEventListener('mouseup', onMouseUp);
   }, [requestPanelRatio]);
-
-  const activeTab = getActiveTab();
 
   // Resolve project path for this tab
   const tabProjectPath = activeTab?.projectPath || activeProjectPath;
@@ -194,7 +199,7 @@ const RequestWorkspace: React.FC = () => {
     }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!tabProjectPath) {
       message.warning(t('workspace.noProjectOpen'));
       return;
@@ -202,8 +207,12 @@ const RequestWorkspace: React.FC = () => {
 
     if (activeTab.filePath) {
       // Existing file - save directly
-      saveRequest(activeTab.id, tabProjectPath);
-      message.success(t('workspace.saved'));
+      try {
+        await saveRequest(activeTab.id, tabProjectPath);
+        message.success(t('workspace.saved'));
+      } catch (e) {
+        message.error(t('workspace.saveFailed', { error: String(e) }));
+      }
     } else {
       // New request - show Save As dialog
       setSaveAsName(activeTab.request.name || t('store.untitled'));
@@ -223,12 +232,15 @@ const RequestWorkspace: React.FC = () => {
 
     try {
       await saveNewRequest(activeTab.id, tabProjectPath, saveAsFolder, trimmedName);
-      await refreshTree(tabProjectPath);
       message.success(t('workspace.saved'));
       setSaveAsModalVisible(false);
     } catch (e) {
       message.error(t('workspace.saveFailed', { error: String(e) }));
     }
+  };
+
+  const handleRename = async (newName: string) => {
+    await renameTab(activeTab.id, newName);
   };
 
   return (
@@ -241,6 +253,7 @@ const RequestWorkspace: React.FC = () => {
           onChange={handleChange}
           onSend={handleSend}
           onSave={tabProjectPath ? handleSave : undefined}
+          onRename={handleRename}
           variables={getVariables(tabProjectPath || undefined)}
         />
       </div>

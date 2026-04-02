@@ -192,13 +192,30 @@ impl ProjectStore {
         self.file_manager.read_json(path).await
     }
 
+    async fn sync_folder_meta_name(&self, folder_path: &Path, new_name: &str) -> AppResult<()> {
+        let meta_path = folder_path.join(FOLDER_META_FILE);
+        let mut meta: FolderMeta = match self.file_manager.read_json(&meta_path).await {
+            Ok(meta) => meta,
+            Err(AppError::Io(error)) if error.kind() == ErrorKind::NotFound => return Ok(()),
+            Err(AppError::Json(_)) => return Ok(()),
+            Err(error) => return Err(error),
+        };
+
+        meta.name = new_name.to_string();
+        self.file_manager.write_json(&meta_path, &meta).await
+    }
+
     /// Rename a node (file or folder)
     pub async fn rename_node(&self, old_path: &Path, new_name: &str) -> AppResult<()> {
         let parent = old_path.parent().ok_or_else(|| AppError::InvalidFormat("Invalid path".to_string()))?;
 
-        let new_path = if old_path.is_dir() {
-            parent.join(new_name)
-        } else {
+        if old_path.is_dir() {
+            let new_path = parent.join(new_name);
+            self.file_manager.rename(old_path, &new_path).await?;
+            return self.sync_folder_meta_name(&new_path, new_name).await;
+        }
+
+        let new_path = {
             // Preserve file extension
             let ext = old_path.extension()
                 .and_then(|e| e.to_str())

@@ -3,6 +3,7 @@ import type { RequestFile, HttpResponse } from '../types';
 import { createNewRequest } from '../types';
 import * as api from '../services/api';
 import i18n from '../i18n';
+import { useProjectStore } from './projectStore';
 
 export type TabType = 'request' | 'websocket';
 
@@ -32,8 +33,34 @@ interface RequestState {
   sendRequest: (tabId: string, variables?: Record<string, string>) => Promise<HttpResponse | undefined>;
   saveRequest: (tabId: string, projectPath: string) => Promise<void>;
   saveNewRequest: (tabId: string, projectPath: string, folderPath: string, name: string) => Promise<string>;
-  renameTab: (tabId: string, newName: string) => void;
+  renameTab: (tabId: string, newName: string) => Promise<void>;
   getActiveTab: () => RequestTab | null;
+}
+
+const INVALID_REQUEST_NAME_PATTERN = /[\\/:*?"<>|]/;
+
+function buildRequestFilePath(folderPath: string, name: string): string {
+  const fileName = `${name}.req.json`;
+  return folderPath === '.' ? fileName : `${folderPath}/${fileName}`;
+}
+
+function getRenamedRequestFilePath(filePath: string, newName: string): string {
+  const normalizedPath = filePath.replaceAll('\\', '/');
+  const lastSlashIndex = normalizedPath.lastIndexOf('/');
+  if (lastSlashIndex < 0) {
+    return `${newName}.req.json`;
+  }
+
+  return `${normalizedPath.slice(0, lastSlashIndex)}/${newName}.req.json`;
+}
+
+function applyInMemoryRename(tab: RequestTab, newName: string): RequestTab {
+  return {
+    ...tab,
+    title: newName,
+    request: { ...tab.request, name: newName },
+    isDirty: true,
+  };
 }
 
 export const useRequestStore = create<RequestState>((set, get) => ({
@@ -186,13 +213,14 @@ export const useRequestStore = create<RequestState>((set, get) => ({
 
   saveRequest: async (tabId, projectPath) => {
     const tab = get().tabs.find(t => t.id === tabId);
-    if (!tab || !tab.filePath) return;
+    if (!tab?.filePath) return;
 
     // Use provided projectPath, or fall back to tab's own projectPath
     const resolvedPath = projectPath || tab.projectPath;
     if (!resolvedPath) return;
 
     await api.saveRequest(resolvedPath, tab.filePath, tab.request);
+    await useProjectStore.getState().refreshTree(resolvedPath);
 
     set((state) => ({
       tabs: state.tabs.map(t =>
@@ -206,12 +234,12 @@ export const useRequestStore = create<RequestState>((set, get) => ({
     if (!tab) throw new Error('Tab not found');
 
     // Build the file path
-    const fileName = `${name}.req.json`;
-    const filePath = folderPath === '.' ? fileName : `${folderPath}/${fileName}`;
+    const filePath = buildRequestFilePath(folderPath, name);
 
     // Update request name and save
     const updatedRequest = { ...tab.request, name };
     await api.saveRequest(projectPath, filePath, updatedRequest);
+    await useProjectStore.getState().refreshTree(projectPath);
 
     // Update tab state with file path, project path, and new name
     set((state) => ({
@@ -225,14 +253,88 @@ export const useRequestStore = create<RequestState>((set, get) => ({
     return filePath;
   },
 
-  renameTab: (tabId, newName) => {
-    set((state) => ({
-      tabs: state.tabs.map(t =>
-        t.id === tabId
-          ? { ...t, title: newName, request: { ...t.request, name: newName }, isDirty: true }
-          : t
-      ),
-    }));
+  renameTab: async (tabId, newName) => {
+    const tab = get().tabs.find(t => t.id === tabId);
+    if (!tab) {
+      throw new Error('Tab not found');
+    }
+
+    const trimmedName = newName.trim();
+    const currentName = tab.request.name || tab.title;
+    if (tab.type === 'websocket') {
+      if (!trimmedName || trimmedName === currentName) {
+        return;
+      }
+
+      set((state) => ({
+        tabs: state.tabs.map(t => (t.id === tabId ? applyInMemoryRename(t, trimmedName) : t)),
+      }));
+      return;
+    }
+
+    if (!trimmedName) {
+      throw new Error(i18n.t('workspace.enterRequestName'));
+    }
+
+    if (INVALID_REQUEST_NAME_PATTERN.test(trimmedName)) {
+      throw new Error(i18n.t('sidebar.invalidNodeName'));
+    }
+
+    if (trimmedName === currentName) {
+      return;
+    }
+
+    const isSavedRequestTab = Boolean(tab.filePath && tab.projectPath);
+    if (!isSavedRequestTab) {
+      set((state) => ({
+        tabs: state.tabs.map(t => (t.id === tabId ? applyInMemoryRename(t, trimmedName) : t)),
+      }));
+      return;
+    }
+
+    const projectPath = tab.projectPath!;
+    const oldFilePath = tab.filePath!;
+    const newFilePath = getRenamedRequestFilePath(oldFilePath, trimmedName);
+    const updatedRequest = { ...tab.request, name: trimmedName };
+
+    await api.renameNode(projectPath, oldFilePath, trimmedName);
+
+    try {
+      await api.saveRequest(projectPath, newFilePath, updatedRequest);
+      await useProjectStore.getState().refreshTree(projectPath);
+
+      set((state) => ({
+        tabs: state.tabs.map((t) =>
+          t.id === tabId
+            ? {
+                ...t,
+                title: trimmedName,
+                request: updatedRequest,
+                filePath: newFilePath,
+                isDirty: false,
+              }
+            : t
+        ),
+      }));
+    } catch (error) {
+      await useProjectStore.getState().refreshTree(projectPath);
+
+      set((state) => ({
+        tabs: state.tabs.map((t) =>
+          t.id === tabId
+            ? {
+                ...t,
+                title: trimmedName,
+                request: updatedRequest,
+                filePath: newFilePath,
+                isDirty: true,
+              }
+            : t
+        ),
+      }));
+
+      throw error;
+    }
   },
 
   getActiveTab: () => {
