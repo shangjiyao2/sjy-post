@@ -20,15 +20,15 @@ jobs:
 
     steps:
       - name: 拉取仓库代码
-        uses: actions/checkout@v0.6.0
+        uses: actions/checkout@v4
 
       - name: 安装 pnpm
-        uses: pnpm/action-setup@v0.6.0
+        uses: pnpm/action-setup@v4
         with:
           version: 10
 
       - name: 安装 Node.js
-        uses: actions/setup-node@v0.6.0
+        uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: pnpm
@@ -40,7 +40,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: 构建并创建 GitHub Release
-        uses: tauri-apps/tauri-action@v1
+        uses: tauri-apps/tauri-action@v0.6.0
         with:
           tagName: ${{ github.ref_name }}
           releaseName: SjyPost ${{ github.ref_name }}
