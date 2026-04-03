@@ -9,6 +9,8 @@
   border-right: 1px solid var(--border-primary);
   min-width: 200px;
   max-width: 500px;
+  --sidebar-tree-font-family: 'PingFang SC', 'Microsoft YaHei UI', 'Microsoft YaHei',
+    'Noto Sans SC', 'Segoe UI', sans-serif;
 }
 
 /* Pencil Collections Tree outer card */
@@ -159,6 +161,14 @@
   border-bottom: none;
 }
 
+.env-selector-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
 .env-selector-actions-trigger {
   opacity: 0;
   pointer-events: none;
@@ -200,7 +210,7 @@
  * ======================================== */
 .sidebar .ant-tree {
   background: transparent !important;
-  font-family: var(--font-family);
+  font-family: var(--sidebar-tree-font-family);
 }
 
 .sidebar .ant-tree-list-holder-inner {
@@ -333,7 +343,8 @@
   min-width: 38px;
   padding: 0 5px;
   border-radius: 999px;
-  font-size: 9px;
+  font-family: var(--sidebar-tree-font-family);
+  font-size: 10px;
   font-weight: 700;
   line-height: 16px;
   letter-spacing: 0.05em;
@@ -344,9 +355,11 @@
 .node-name {
   flex: 1;
   min-width: 0;
-  font-size: 12px;
+  font-family: var(--sidebar-tree-font-family);
+  font-size: 13px;
   font-weight: 500;
   color: var(--text-secondary);
+  line-height: 1.45;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -358,7 +371,7 @@
 }
 
 .sidebar .ant-tree-treenode:not(.ant-tree-treenode-leaf) .node-name {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--text-primary);
 }

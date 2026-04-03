@@ -825,6 +825,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeNavItem }) => {
         </div>
 
         <div className="env-selector-bar">
+          <span className="env-selector-label">{t('navRail.environments')}</span>
           <Select
             value={currentCollection?.activeEnvironment || undefined}
             placeholder={t('environment.selectEnv')}

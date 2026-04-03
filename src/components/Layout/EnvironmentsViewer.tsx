@@ -835,14 +835,6 @@ const EnvironmentsViewer: React.FC = () => {
           <button
             type="button"
             className="env-chip"
-            disabled={selectedKeys.size === 0}
-            onClick={handleClearSelection}
-          >
-            {t('environment.cancel')}
-          </button>
-          <button
-            type="button"
-            className="env-chip"
             disabled={selectedBatchRefs.length === 0}
             onClick={handleBatchDelete}
           >
