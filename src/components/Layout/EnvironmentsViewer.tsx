@@ -457,10 +457,6 @@ const EnvironmentsViewer: React.FC = () => {
     });
   };
 
-  const handleClearSelection = () => {
-    setSelectedKeys(new Set());
-  };
-
   const getEnvironmentByRef = (ref: SelectedEnvRef): Environment | null => {
     if (ref.scope === 'global') {
       return globalEnvironments.find((environment) => environment.id === ref.id) ?? null;
