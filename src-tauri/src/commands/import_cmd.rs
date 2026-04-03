@@ -108,30 +108,27 @@ async fn import_items_to_project(
     importer: &PostmanImporter,
 ) -> AppResult<()> {
     for item in items {
-        match item {
-            PostmanItem::Folder { name, item: children } => {
-                // Create folder
-                let folder_path = target_dir.join(sanitize_filename(name));
-                if !folder_path.exists() {
-                    fs::create_dir_all(&folder_path)?;
-                }
-
-                // Recursively import children
-                Box::pin(import_items_to_project(
-                    children,
-                    &folder_path,
-                    store,
-                    importer,
-                ))
-                .await?;
+        if !item.item.is_empty() {
+            // Create folder
+            let folder_path = target_dir.join(sanitize_filename(&item.name));
+            if !folder_path.exists() {
+                fs::create_dir_all(&folder_path)?;
             }
-            PostmanItem::Request { name, request } => {
-                // Convert and save request
-                if let Some(req) = importer.convert_request_public(name, request) {
-                    let file_name = format!("{}.req.json", sanitize_filename(&req.name));
-                    let file_path = target_dir.join(&file_name);
-                    store.save_request(&file_path, &req).await?;
-                }
+
+            // Recursively import children
+            Box::pin(import_items_to_project(
+                &item.item,
+                &folder_path,
+                store,
+                importer,
+            ))
+            .await?;
+        } else if let Some(request) = &item.request {
+            // Convert and save request
+            if let Some(req) = importer.convert_request_public(&item.name, request) {
+                let file_name = format!("{}.req.json", sanitize_filename(&req.name));
+                let file_path = target_dir.join(&file_name);
+                store.save_request(&file_path, &req).await?;
             }
         }
     }

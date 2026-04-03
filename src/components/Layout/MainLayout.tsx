@@ -4,6 +4,7 @@ import NavRail from '../NavRail/NavRail';
 import Sidebar from '../Sidebar/Sidebar';
 import TabBar from '../TabBar/TabBar';
 import ContentArea from './ContentArea';
+import WelcomePanel from '../Welcome/WelcomePanel';
 import { isQaPreset } from '../../browserQaPreset';
 import { useNavStore } from '../../stores/navStore';
 import { useProjectStore } from '../../stores/projectStore';
@@ -17,6 +18,7 @@ const MainLayout: React.FC = () => {
   const restoreCollections = useProjectStore((s) => s.restoreCollections);
   const collectionCount = useProjectStore((s) => Object.keys(s.collections).length);
   const hideWelcome = useAppShellStore((s) => s.hideWelcome);
+  const hasShownWelcome = useAppShellStore((s) => s.hasShownWelcome);
   const loadEnvironments = useGlobalEnvironmentStore((s) => s.loadEnvironments);
   const qaPreset = new URLSearchParams(globalThis.location.search).get('qa');
 
@@ -27,12 +29,15 @@ const MainLayout: React.FC = () => {
     loadEnvironments();
   }, [loadEnvironments, qaPreset, restoreCollections]);
 
-  if (qaPreset === 'welcome' && !hideWelcome && collectionCount === 0) {
+  const forceWelcomeQa = qaPreset === 'welcome' && !hideWelcome && collectionCount === 0;
+  const shouldShowWelcome = !forceWelcomeQa && !hideWelcome && !hasShownWelcome;
+
+  if (forceWelcomeQa || shouldShowWelcome) {
     return (
       <div className="main-layout">
         <div className="main-content">
           <div className="workspace">
-            <ContentArea />
+            <WelcomePanel />
           </div>
         </div>
       </div>

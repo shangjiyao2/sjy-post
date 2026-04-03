@@ -1,9 +1,6 @@
-import React, { useEffect, useMemo } from 'react';
+import React from 'react';
 import { useNavStore } from '../../stores/navStore';
-import { useAppShellStore } from '../../stores/appShellStore';
-import { useProjectStore } from '../../stores/projectStore';
 import RequestWorkspace from '../Editor/RequestWorkspace';
-import WelcomePanel from '../Welcome/WelcomePanel';
 import ApiDocViewer from './ApiDocViewer';
 import JavaEndpointsViewer from './JavaEndpointsViewer';
 import PermissionConfigViewer from './PermissionConfigViewer';
@@ -14,23 +11,6 @@ import './ContentArea.css';
 
 const ContentArea: React.FC = () => {
   const activeNavItem = useNavStore((s) => s.activeNavItem);
-  const collectionCount = useProjectStore((s) => Object.keys(s.collections).length);
-  const hideWelcome = useAppShellStore((s) => s.hideWelcome);
-  const hasShownWelcome = useAppShellStore((s) => s.hasShownWelcome);
-  const markWelcomeShown = useAppShellStore((s) => s.markWelcomeShown);
-  const qaPreset = new URLSearchParams(globalThis.location.search).get('qa');
-  const forceWelcomeQa = qaPreset === 'welcome' && !hideWelcome && collectionCount === 0;
-
-  const shouldShowWelcome = useMemo(
-    () => !forceWelcomeQa && activeNavItem === 'collections' && !hideWelcome && !hasShownWelcome,
-    [activeNavItem, forceWelcomeQa, hasShownWelcome, hideWelcome],
-  );
-
-  useEffect(() => {
-    if (shouldShowWelcome) {
-      markWelcomeShown();
-    }
-  }, [markWelcomeShown, shouldShowWelcome]);
 
   if (activeNavItem === 'javaImport') {
     return (
@@ -76,14 +56,6 @@ const ContentArea: React.FC = () => {
     return (
       <div className="content-area no-card">
         <SettingsViewer />
-      </div>
-    );
-  }
-
-  if (forceWelcomeQa || shouldShowWelcome) {
-    return (
-      <div className="content-area no-card">
-        <WelcomePanel />
       </div>
     );
   }

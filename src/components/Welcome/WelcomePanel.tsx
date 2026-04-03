@@ -82,6 +82,7 @@ const WelcomePanel: React.FC = () => {
   const { collections, openProject } = useProjectStore();
   const { openNewTab } = useRequestStore();
   const dismissWelcome = useAppShellStore((s) => s.dismissWelcome);
+  const markWelcomeShown = useAppShellStore((s) => s.markWelcomeShown);
 
   const hasCollections = Object.keys(collections).length > 0;
 
@@ -172,8 +173,12 @@ const WelcomePanel: React.FC = () => {
           className="btn-primary"
           type="primary"
           onClick={hasCollections ? () => {
+            markWelcomeShown();
             openNewTab();
-          } : handleOpenProject}
+          } : async () => {
+            markWelcomeShown();
+            await handleOpenProject();
+          }}
         >
           {t('welcome.start')}
         </Button>
