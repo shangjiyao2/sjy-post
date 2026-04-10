@@ -390,62 +390,64 @@ const KeyValueEditor: React.FC<KeyValueEditorProps> = ({ items, onChange, placeh
 
   return (
     <div className="key-value-editor">
-      <Table
-        dataSource={items.map((item, index) => ({ ...item, index }))}
-        rowKey="index"
-        size="small"
-        pagination={false}
-        columns={[
-          {
-            title: (
-              <Checkbox
-                checked={allChecked}
-                indeterminate={someChecked}
-                onChange={(e) => toggleAll(e.target.checked)}
-              />
-            ),
-            width: 36,
-            dataIndex: 'enabled',
-            render: (_, record) => (
-              <Checkbox
-                checked={record.enabled}
-                onChange={(e) => updateItem(record.index, 'enabled', e.target.checked)}
-              />
-            ),
-          },
-          {
-            title: 'Key',
-            dataIndex: 'key',
-            render: (_, record) => (
-              <Input
-                size="small"
-                placeholder={placeholder?.key}
-                value={record.key}
-                onChange={(e) => updateItem(record.index, 'key', e.target.value)}
-                className={record.enabled ? '' : 'kv-disabled'}
-              />
-            ),
-          },
-          {
-            title: 'Value',
-            dataIndex: 'value',
-            render: (_, record) => (
-              <Input
-                size="small"
-                placeholder={placeholder?.value}
-                value={record.value}
-                onChange={(e) => updateItem(record.index, 'value', e.target.value)}
-                className={record.enabled ? '' : 'kv-disabled'}
-              />
-            ),
-          },
-          {
-            title: '',
-            width: 48,
-            render: (_, record) => renderCompactDeleteButton(t('environment.delete'), () => removeItem(record.index)),
-          },
-        ]}
-      />
+      <div className="editor-table-scroll-region">
+        <Table
+          dataSource={items.map((item, index) => ({ ...item, index }))}
+          rowKey="index"
+          size="small"
+          pagination={false}
+          columns={[
+            {
+              title: (
+                <Checkbox
+                  checked={allChecked}
+                  indeterminate={someChecked}
+                  onChange={(e) => toggleAll(e.target.checked)}
+                />
+              ),
+              width: 36,
+              dataIndex: 'enabled',
+              render: (_, record) => (
+                <Checkbox
+                  checked={record.enabled}
+                  onChange={(e) => updateItem(record.index, 'enabled', e.target.checked)}
+                />
+              ),
+            },
+            {
+              title: 'Key',
+              dataIndex: 'key',
+              render: (_, record) => (
+                <Input
+                  size="small"
+                  placeholder={placeholder?.key}
+                  value={record.key}
+                  onChange={(e) => updateItem(record.index, 'key', e.target.value)}
+                  className={record.enabled ? '' : 'kv-disabled'}
+                />
+              ),
+            },
+            {
+              title: 'Value',
+              dataIndex: 'value',
+              render: (_, record) => (
+                <Input
+                  size="small"
+                  placeholder={placeholder?.value}
+                  value={record.value}
+                  onChange={(e) => updateItem(record.index, 'value', e.target.value)}
+                  className={record.enabled ? '' : 'kv-disabled'}
+                />
+              ),
+            },
+            {
+              title: '',
+              width: 48,
+              render: (_, record) => renderCompactDeleteButton(t('environment.delete'), () => removeItem(record.index)),
+            },
+          ]}
+        />
+      </div>
       {renderCompactAddButton(t('editor.addParameter'), addItem, 'parameter')}
     </div>
   );
@@ -504,100 +506,102 @@ const FormKeyValueEditor: React.FC<FormKeyValueEditorProps> = ({ items, onChange
 
   return (
     <div className="key-value-editor">
-      <Table
-        dataSource={items.map((item, index) => ({ ...item, index }))}
-        rowKey="index"
-        size="small"
-        pagination={false}
-        columns={[
-          {
-            title: (
-              <Checkbox
-                checked={allChecked}
-                indeterminate={someChecked}
-                onChange={(e) => toggleAll(e.target.checked)}
-              />
-            ),
-            width: 36,
-            dataIndex: 'enabled',
-            render: (_, record) => (
-              <Checkbox
-                checked={record.enabled}
-                onChange={(e) => updateItem(record.index, 'enabled', e.target.checked)}
-              />
-            ),
-          },
-          {
-            title: 'Key',
-            dataIndex: 'key',
-            render: (_, record) => (
-              <Input
-                size="small"
-                placeholder={placeholder?.key}
-                value={record.key}
-                onChange={(e) => updateItem(record.index, 'key', e.target.value)}
-                className={record.enabled ? '' : 'kv-disabled'}
-              />
-            ),
-          },
-          {
-            title: t('editor.type'),
-            width: 90,
-            dataIndex: 'valueType',
-            render: (_, record) => (
-              <Select
-                size="small"
-                value={record.valueType || 'text'}
-                onChange={(val) => updateItem(record.index, 'valueType', val)}
-                style={{ width: '100%' }}
-                options={[
-                  { value: 'text', label: t('editor.text') },
-                  { value: 'file', label: t('editor.file') },
-                ]}
-              />
-            ),
-          },
-          {
-            title: 'Value',
-            dataIndex: 'value',
-            render: (_, record) => {
-              if ((record.valueType || 'text') === 'file') {
-                return (
-                  <Space.Compact style={{ width: '100%' }}>
-                    <Input
-                      size="small"
-                      placeholder={t('editor.selectFile')}
-                      value={record.value}
-                      readOnly
-                      className={record.enabled ? '' : 'kv-disabled'}
-                      style={{ flex: 1 }}
-                    />
-                    <Button
-                      size="small"
-                      icon={<UploadOutlined />}
-                      onClick={() => handleSelectFile(record.index)}
-                    />
-                  </Space.Compact>
-                );
-              }
-              return (
+      <div className="editor-table-scroll-region">
+        <Table
+          dataSource={items.map((item, index) => ({ ...item, index }))}
+          rowKey="index"
+          size="small"
+          pagination={false}
+          columns={[
+            {
+              title: (
+                <Checkbox
+                  checked={allChecked}
+                  indeterminate={someChecked}
+                  onChange={(e) => toggleAll(e.target.checked)}
+                />
+              ),
+              width: 36,
+              dataIndex: 'enabled',
+              render: (_, record) => (
+                <Checkbox
+                  checked={record.enabled}
+                  onChange={(e) => updateItem(record.index, 'enabled', e.target.checked)}
+                />
+              ),
+            },
+            {
+              title: 'Key',
+              dataIndex: 'key',
+              render: (_, record) => (
                 <Input
                   size="small"
-                  placeholder={placeholder?.value}
-                  value={record.value}
-                  onChange={(e) => updateItem(record.index, 'value', e.target.value)}
+                  placeholder={placeholder?.key}
+                  value={record.key}
+                  onChange={(e) => updateItem(record.index, 'key', e.target.value)}
                   className={record.enabled ? '' : 'kv-disabled'}
                 />
-              );
+              ),
             },
-          },
-          {
-            title: '',
-            width: 48,
-            render: (_, record) => renderCompactDeleteButton(t('environment.delete'), () => removeItem(record.index)),
-          },
-        ]}
-      />
+            {
+              title: t('editor.type'),
+              width: 90,
+              dataIndex: 'valueType',
+              render: (_, record) => (
+                <Select
+                  size="small"
+                  value={record.valueType || 'text'}
+                  onChange={(val) => updateItem(record.index, 'valueType', val)}
+                  style={{ width: '100%' }}
+                  options={[
+                    { value: 'text', label: t('editor.text') },
+                    { value: 'file', label: t('editor.file') },
+                  ]}
+                />
+              ),
+            },
+            {
+              title: 'Value',
+              dataIndex: 'value',
+              render: (_, record) => {
+                if ((record.valueType || 'text') === 'file') {
+                  return (
+                    <Space.Compact style={{ width: '100%' }}>
+                      <Input
+                        size="small"
+                        placeholder={t('editor.selectFile')}
+                        value={record.value}
+                        readOnly
+                        className={record.enabled ? '' : 'kv-disabled'}
+                        style={{ flex: 1 }}
+                      />
+                      <Button
+                        size="small"
+                        icon={<UploadOutlined />}
+                        onClick={() => handleSelectFile(record.index)}
+                      />
+                    </Space.Compact>
+                  );
+                }
+                return (
+                  <Input
+                    size="small"
+                    placeholder={placeholder?.value}
+                    value={record.value}
+                    onChange={(e) => updateItem(record.index, 'value', e.target.value)}
+                    className={record.enabled ? '' : 'kv-disabled'}
+                  />
+                );
+              },
+            },
+            {
+              title: '',
+              width: 48,
+              render: (_, record) => renderCompactDeleteButton(t('environment.delete'), () => removeItem(record.index)),
+            },
+          ]}
+        />
+      </div>
       {renderCompactAddButton(t('editor.addParameter'), addItem, 'parameter')}
     </div>
   );

@@ -628,42 +628,6 @@ const PermissionConfigViewer: React.FC = () => {
       />
 
       <div className="permission-generator-pane">
-        <div className="permission-hintbar">
-          <span className="permission-hintbar-icon">
-            <FileAddOutlined />
-          </span>
-          <div className="permission-hintbar-text">{t('permissionConfig.pageHint')}</div>
-        </div>
-
-        <div className="permission-stats">
-          <span className="permission-chip">{t('permissionConfig.selectedEndpointCount', { count: selectedEndpointIds.length })}</span>
-          <span className="permission-chip">{t('permissionConfig.draftRowCount', { count: generatedRows.length })}</span>
-          <span className="permission-chip">{bulkScopeText}</span>
-        </div>
-
-        <div className="permission-actions">
-          <button type="button" className="permission-action-btn" onClick={handlePreviewSql} disabled={generatedRows.length === 0}>
-            <EyeOutlined />
-            {t('permissionConfig.previewSql')}
-          </button>
-          <button type="button" className="permission-action-btn" onClick={handleExportSql} disabled={rowsForBulkAction.length === 0}>
-            <SaveOutlined />
-            {t('permissionConfig.exportSql')}
-          </button>
-          <button type="button" className="permission-action-btn" onClick={handleCopySelected} disabled={selectedRowIds.length === 0}>
-            <CopyOutlined />
-            {t('permissionConfig.copySelected', { count: selectedRowIds.length })}
-          </button>
-          <button type="button" className="permission-action-btn" onClick={handleCopyAll} disabled={generatedRows.length === 0}>
-            <CopyOutlined />
-            {t('permissionConfig.copyAll', { count: generatedRows.length })}
-          </button>
-          <button type="button" className="permission-action-btn danger" onClick={removeSelectedRows} disabled={selectedRowIds.length === 0}>
-            <DeleteOutlined />
-            {t('permissionConfig.deleteSelected', { count: selectedRowIds.length })}
-          </button>
-        </div>
-
         {!hasProject && (
           <div className="permission-empty-state">
             <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={t('permissionConfig.noJavaProject')} />
@@ -745,6 +709,35 @@ const PermissionConfigViewer: React.FC = () => {
                     <Input value={form.tableName} onChange={(e) => setFormField('tableName', e.target.value)} />
                   </div>
                 </div>
+              </div>
+            </div>
+
+            <div className="permission-toolbar">
+              <div className="permission-toolbar-left">
+                <span className="permission-chip">{t('permissionConfig.selectedEndpointCount', { count: selectedEndpointIds.length })}</span>
+                <span className="permission-chip">{t('permissionConfig.draftRowCount', { count: generatedRows.length })}</span>
+              </div>
+              <div className="permission-toolbar-right">
+                <button type="button" className="permission-action-btn" onClick={handlePreviewSql} disabled={generatedRows.length === 0}>
+                  <EyeOutlined />
+                  {t('permissionConfig.previewSql')}
+                </button>
+                <button type="button" className="permission-action-btn" onClick={handleExportSql} disabled={rowsForBulkAction.length === 0}>
+                  <SaveOutlined />
+                  {t('permissionConfig.exportSql')}
+                </button>
+                <button type="button" className="permission-action-btn" onClick={handleCopySelected} disabled={selectedRowIds.length === 0}>
+                  <CopyOutlined />
+                  {t('permissionConfig.copySelected', { count: selectedRowIds.length })}
+                </button>
+                <button type="button" className="permission-action-btn" onClick={handleCopyAll} disabled={generatedRows.length === 0}>
+                  <CopyOutlined />
+                  {t('permissionConfig.copyAll', { count: generatedRows.length })}
+                </button>
+                <button type="button" className="permission-action-btn danger" onClick={removeSelectedRows} disabled={selectedRowIds.length === 0}>
+                  <DeleteOutlined />
+                  {t('permissionConfig.deleteSelected', { count: selectedRowIds.length })}
+                </button>
               </div>
             </div>
 

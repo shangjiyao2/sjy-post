@@ -19,8 +19,6 @@
   overflow: hidden;
   padding: 16px;
   background: var(--surface-2);
-  border: 1px solid var(--border-primary);
-  border-radius: 12px;
   display: flex;
   flex-direction: column;
   gap: 14px;

@@ -267,7 +267,7 @@ const EnvironmentsViewer: React.FC = () => {
     paneStyle,
     handleResizeKeyDown,
     handleResizeMouseDown,
-  } = useHorizontalPaneResize({ initialWidth: 360, minWidth: 280, maxWidth: 500, minSecondaryWidth: 460 });
+  } = useHorizontalPaneResize({ initialWidth: 360, minWidth: 280, maxWidth: 520, minSecondaryWidth: 520 });
 
   const projectPaths = useMemo(() => Object.keys(collections), [collections]);
   const previousProjectPathsRef = useRef<string[]>([]);

@@ -2,8 +2,10 @@
   display: flex;
   flex-direction: column;
   height: 100%;
+  min-height: 0;
   padding: 12px;
   background: transparent;
+  overflow: hidden;
 }
 
 .request-editor-header {
@@ -225,6 +227,18 @@
 .body-editor {
   display: flex;
   flex-direction: column;
+  min-width: 0;
+}
+
+.body-editor-content {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+}
+
+.body-editor-content .monaco-editor-wrapper {
+  flex: 1;
+  min-width: 0;
 }
 
 .body-textarea {
@@ -236,7 +250,17 @@
 }
 
 .key-value-editor {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
   padding: 0;
+}
+
+.editor-table-scroll-region {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
 }
 
 .key-value-editor .ant-table {
@@ -494,6 +518,28 @@
 /* Tabs styling */
 .request-editor .ant-tabs-nav {
   margin-bottom: var(--spacing-md);
+}
+
+.request-tabs {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.request-tabs > .ant-tabs-nav {
+  flex-shrink: 0;
+}
+
+.request-tabs > .ant-tabs-content-holder,
+.request-tabs > .ant-tabs-content-holder > .ant-tabs-content,
+.request-tabs > .ant-tabs-content-holder > .ant-tabs-content > .ant-tabs-tabpane {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .request-editor .ant-tabs-tab {

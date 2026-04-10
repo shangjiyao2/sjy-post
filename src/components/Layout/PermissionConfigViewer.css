@@ -1,6 +1,5 @@
 .permission-viewer {
   display: flex;
-  gap: 8px;
   height: 100%;
   width: 100%;
   background: var(--app-canvas-bg, var(--bg-secondary));
@@ -14,16 +13,15 @@
   height: 100%;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 14px;
+  gap: 14px;
+  padding: 16px;
   background: var(--surface-2);
-  border: 1px solid var(--border-primary);
-  border-radius: 12px;
+  border-right: 1px solid var(--border-primary);
   overflow: hidden;
 }
 
 .permission-projects-title {
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 600;
   color: var(--text-primary);
 }
@@ -179,40 +177,22 @@
   flex-direction: column;
   gap: 14px;
   padding: 32px 22px 18px 22px;
-  background: transparent;
+  background: var(--surface-2);
 }
 
-.permission-hintbar {
+.permission-toolbar {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 10px;
-  padding: 10px 12px;
-  border-radius: 10px;
-  background: var(--surface-1);
-  border: 1px solid var(--border-primary);
+  flex-wrap: wrap;
 }
 
-.permission-hintbar-icon {
-  width: 14px;
-  height: 14px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--color-primary);
-  flex: 0 0 auto;
-}
-
-.permission-hintbar-text {
-  flex: 1;
-  font-size: 13px;
-  line-height: 1.45;
-  color: var(--text-primary);
-}
-
-.permission-stats {
+.permission-toolbar-left,
+.permission-toolbar-right {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   flex-wrap: wrap;
 }
 
@@ -231,7 +211,6 @@
 .permission-actions {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
   gap: 8px;
   flex-wrap: wrap;
 }
@@ -286,7 +265,7 @@
 .permission-base-form {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
 }
 
 .permission-form-row {
@@ -597,7 +576,7 @@
 }
 
 .split-pane-divider-shell {
-  margin: 14px 0;
+  margin: 0;
 }
 
 .permission-table-wrap {
@@ -853,6 +832,8 @@
     flex-basis: auto;
     height: auto;
     max-height: 40%;
+    border-right: none;
+    border-bottom: 1px solid var(--border-primary);
   }
 
   .permission-generator-pane {

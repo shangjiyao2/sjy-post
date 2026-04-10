@@ -1,4 +1,4 @@
-import React, { useRef, useCallback } from 'react';
+import React, { useRef, useCallback, useEffect } from 'react';
 import Editor, { OnMount, OnChange } from '@monaco-editor/react';
 import type { editor } from 'monaco-editor';
 import { useTranslation } from 'react-i18next';
@@ -33,9 +33,20 @@ const MonacoEditor: React.FC<MonacoEditorProps> = ({
   const isDark = useThemeStore((s) => s.isDark);
   const { t } = useTranslation();
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
 
   const handleEditorDidMount: OnMount = useCallback((editor) => {
     editorRef.current = editor;
+    const wrapper = wrapperRef.current;
+
+    if (wrapper) {
+      requestAnimationFrame(() => {
+        editor.layout({
+          width: wrapper.clientWidth,
+          height: wrapper.clientHeight,
+        });
+      });
+    }
 
     // Add format document command (Shift+Alt+F)
     editor.addAction({
@@ -60,8 +71,47 @@ const MonacoEditor: React.FC<MonacoEditorProps> = ({
     [onChange]
   );
 
+  useEffect(() => {
+    const wrapper = wrapperRef.current;
+    const currentEditor = editorRef.current;
+
+    if (!wrapper || !currentEditor || typeof ResizeObserver === 'undefined') {
+      return undefined;
+    }
+
+    let frameId: number | null = null;
+    const syncLayout = () => {
+      if (frameId !== null) {
+        cancelAnimationFrame(frameId);
+      }
+
+      frameId = requestAnimationFrame(() => {
+        frameId = null;
+        currentEditor.layout({
+          width: wrapper.clientWidth,
+          height: wrapper.clientHeight,
+        });
+      });
+    };
+
+    syncLayout();
+
+    const resizeObserver = new ResizeObserver(() => {
+      syncLayout();
+    });
+
+    resizeObserver.observe(wrapper);
+
+    return () => {
+      resizeObserver.disconnect();
+      if (frameId !== null) {
+        cancelAnimationFrame(frameId);
+      }
+    };
+  }, [height]);
+
   return (
-    <div className="monaco-editor-wrapper" style={{ height }}>
+    <div className="monaco-editor-wrapper" style={{ height }} ref={wrapperRef}>
       <Editor
         height="100%"
         language={language === 'text' ? 'plaintext' : language}

@@ -478,35 +478,33 @@ const JavaEndpointsViewer: React.FC = () => {
   const rightPaneEmptyState = !currentProject || !parsedData;
 
   return (
-    <div className="java-endpoints-viewer">
-      <div className="java-viewer-topbar">
-        <div className="java-viewer-title">{t('navRail.javaImport')}</div>
-        <Button
-          type="primary"
-          icon={<PlusOutlined />}
-          onClick={handleAddJavaProject}
-          loading={loading}
-          className="java-viewer-add-btn"
-        >
-          {t('javaImport.addProject')}
-        </Button>
+    <div className="java-endpoints-viewer" ref={containerRef}>
+      <div className="java-project-pane" style={paneStyle}>
+        <div className="java-title-row">
+          <div className="java-viewer-title">{t('navRail.javaImport')}</div>
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={handleAddJavaProject}
+            loading={loading}
+            className="java-viewer-add-btn"
+          >
+            {t('javaImport.addProject')}
+          </Button>
+        </div>
+        <div className="java-pane-title">{t('javaImport.savedProjects')}</div>
+        {projectEmptyState}
       </div>
 
-      <div className="java-viewer-content" ref={containerRef}>
-        <div className="java-project-pane" style={paneStyle}>
-          <div className="java-pane-title">{t('javaImport.savedProjects')}</div>
-          {projectEmptyState}
-        </div>
+      <button
+        type="button"
+        className="split-pane-divider"
+        onMouseDown={handleResizeMouseDown}
+        onKeyDown={handleResizeKeyDown}
+        aria-label={t('javaImport.savedProjects')}
+      />
 
-        <button
-          type="button"
-          className="split-pane-divider"
-          onMouseDown={handleResizeMouseDown}
-          onKeyDown={handleResizeKeyDown}
-          aria-label={t('javaImport.savedProjects')}
-        />
-
-        <div className="java-selection-pane">
+      <div className="java-detail-pane">
           {rightPaneEmptyState ? (
             <div className="java-selection-empty">
               <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={t('javaImport.selectProjectHint')} />
@@ -633,7 +631,6 @@ const JavaEndpointsViewer: React.FC = () => {
             </>
           )}
         </div>
-      </div>
 
       <Modal
         title={t('javaImport.importTitle')}

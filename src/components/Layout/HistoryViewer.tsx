@@ -421,7 +421,7 @@ const HistoryViewer: React.FC = () => {
     paneStyle,
     handleResizeKeyDown,
     handleResizeMouseDown,
-  } = useHorizontalPaneResize({ initialWidth: 520, minWidth: 360, maxWidth: 760, minSecondaryWidth: 460 });
+  } = useHorizontalPaneResize({ initialWidth: 360, minWidth: 280, maxWidth: 520, minSecondaryWidth: 520 });
 
   useEffect(() => {
     if (activeProjectPath) {
