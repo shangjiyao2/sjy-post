@@ -551,6 +551,10 @@
   color: var(--text-muted);
 }
 
+.java-import-target-select {
+  width: 100%;
+}
+
 @media (max-width: 1200px) {
   .java-project-pane {
     width: 320px;

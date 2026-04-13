@@ -6,7 +6,8 @@ import { useApiDocStore } from '../../stores/apiDocStore';
 import { useProjectStore } from '../../stores/projectStore';
 import type { ApiDocListItem } from '../../services/api';
 import { useHorizontalPaneResize } from '../../hooks/useHorizontalPaneResize';
-import { SearchIcon } from '../Sidebar/TreeIcons';
+import { formatProjectPathLabel } from '../../types';
+import { ChevronDownIcon, SearchIcon } from '../Sidebar/TreeIcons';
 import './ApiDocViewer.css';
 import './SplitPaneDivider.css';
 
@@ -41,8 +42,12 @@ interface ApiDocListBodyProps {
   groupedDocs: ApiDocGroup[];
   hasProject: boolean;
   isLoading: boolean;
+  isProjectCollapsed: boolean;
   onSelectDoc: (fileName: string) => void;
+  onToggleProject: () => void;
   onToggleGroup: (controllerName: string) => void;
+  projectName: string;
+  projectPathLabel: string;
   t: TranslateFn;
 }
 
@@ -124,7 +129,8 @@ function buildGroupedDocs(docs: ApiDocListItem[], q: string) {
     if (query) {
       const title = (doc.title || '').toLowerCase();
       const endpoint = (doc.endpointPath || '').toLowerCase();
-      if (!title.includes(query) && !endpoint.includes(query)) continue;
+      const controller = `${doc.controllerDescription || ''} ${doc.controllerName || ''}`.toLowerCase();
+      if (!title.includes(query) && !endpoint.includes(query) && !controller.includes(query)) continue;
     }
 
     const existing = groupMap.get(doc.controllerName);
@@ -141,6 +147,48 @@ function buildGroupedDocs(docs: ApiDocListItem[], q: string) {
 
   return ordered;
 }
+
+interface ApiDocProjectSectionProps {
+  children: React.ReactNode;
+  docCount: number;
+  isCollapsed: boolean;
+  onToggle: () => void;
+  projectName: string;
+  projectPathLabel: string;
+}
+
+const ApiDocProjectSection: React.FC<ApiDocProjectSectionProps> = ({
+  children,
+  docCount,
+  isCollapsed,
+  onToggle,
+  projectName,
+  projectPathLabel,
+}) => {
+  return (
+    <div className="api-docs-project">
+      <button
+        type="button"
+        className="api-docs-project-head"
+        onClick={onToggle}
+        title={projectName}
+      >
+        <ChevronDownIcon className={`api-docs-project-chevron ${isCollapsed ? 'collapsed' : 'expanded'}`} />
+        <div className="api-docs-project-info">
+          <span className="api-docs-project-name">{projectName}</span>
+          <span className="api-docs-project-path">{projectPathLabel}</span>
+        </div>
+        <span className="api-docs-project-count">{docCount}</span>
+      </button>
+
+      {!isCollapsed && (
+        <div className="api-docs-project-body">
+          {children}
+        </div>
+      )}
+    </div>
+  );
+};
 
 const ApiDocRow: React.FC<ApiDocRowProps> = ({ doc, isActive, onSelectDoc }) => {
   const title = doc.title || doc.endpointPath;
@@ -205,8 +253,12 @@ const ApiDocListBody: React.FC<ApiDocListBodyProps> = ({
   groupedDocs,
   hasProject,
   isLoading,
+  isProjectCollapsed,
   onSelectDoc,
+  onToggleProject,
   onToggleGroup,
+  projectName,
+  projectPathLabel,
   t,
 }) => {
   if (!hasProject) {
@@ -225,32 +277,36 @@ const ApiDocListBody: React.FC<ApiDocListBodyProps> = ({
     );
   }
 
-  if (groupedDocs.length === 0) {
-    return (
-      <div className="api-docs-empty">
-        <Empty
-          image={Empty.PRESENTED_IMAGE_SIMPLE}
-          description={docs.length === 0 ? t('apiDocs.noDocs') : t('apiDocs.noMatch')}
-        />
-      </div>
-    );
-  }
-
   return (
-    <>
-      {groupedDocs.map(({ controllerName, displayName, docs: controllerDocs }) => (
-        <ApiDocGroupSection
-          key={controllerName}
-          controllerName={controllerName}
-          currentDocFileName={currentDocFileName}
-          displayName={displayName}
-          docs={controllerDocs}
-          isCollapsed={collapsedGroups.has(controllerName)}
-          onSelectDoc={onSelectDoc}
-          onToggleGroup={onToggleGroup}
-        />
-      ))}
-    </>
+    <ApiDocProjectSection
+      docCount={docs.length}
+      isCollapsed={isProjectCollapsed}
+      onToggle={onToggleProject}
+      projectName={projectName}
+      projectPathLabel={projectPathLabel}
+    >
+      {groupedDocs.length === 0 ? (
+        <div className="api-docs-empty">
+          <Empty
+            image={Empty.PRESENTED_IMAGE_SIMPLE}
+            description={docs.length === 0 ? t('apiDocs.noDocs') : t('apiDocs.noMatch')}
+          />
+        </div>
+      ) : (
+        groupedDocs.map(({ controllerName, displayName, docs: controllerDocs }) => (
+          <ApiDocGroupSection
+            key={controllerName}
+            controllerName={controllerName}
+            currentDocFileName={currentDocFileName}
+            displayName={displayName}
+            docs={controllerDocs}
+            isCollapsed={collapsedGroups.has(controllerName)}
+            onSelectDoc={onSelectDoc}
+            onToggleGroup={onToggleGroup}
+          />
+        ))
+      )}
+    </ApiDocProjectSection>
   );
 };
 
@@ -327,7 +383,7 @@ const ApiDocDetailBody: React.FC<ApiDocDetailBodyProps> = ({
 
 const ApiDocViewer: React.FC = () => {
   const { t } = useTranslation();
-  const { activeProjectPath } = useProjectStore();
+  const { activeProjectPath, collections } = useProjectStore();
   const {
     docs,
     currentDocContent,
@@ -342,9 +398,13 @@ const ApiDocViewer: React.FC = () => {
 
   const effectivePath = activeProjectPath || currentProjectPath;
   const hasProject = Boolean(effectivePath);
+  const projectEntry = effectivePath ? collections[effectivePath] : undefined;
+  const projectName = projectEntry?.project.name || (effectivePath ? formatProjectPathLabel(effectivePath) : t('sidebar.project'));
+  const projectPathLabel = effectivePath ? formatProjectPathLabel(effectivePath) : '-';
 
   const [search, setSearch] = useState('');
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
+  const [isProjectCollapsed, setIsProjectCollapsed] = useState(false);
   const {
     containerRef,
     isStacked,
@@ -358,6 +418,10 @@ const ApiDocViewer: React.FC = () => {
     loadDocs(activeProjectPath);
     clearCurrentDoc();
   }, [activeProjectPath, clearCurrentDoc, loadDocs]);
+
+  useEffect(() => {
+    setIsProjectCollapsed(false);
+  }, [effectivePath]);
 
   const selectedDocMeta = useMemo(() => {
     if (!currentDocFileName) return null;
@@ -396,6 +460,10 @@ const ApiDocViewer: React.FC = () => {
       }
       return next;
     });
+  };
+
+  const toggleProject = () => {
+    setIsProjectCollapsed((prev) => !prev);
   };
 
   const handleDeleteCurrent = async () => {
@@ -467,8 +535,12 @@ const ApiDocViewer: React.FC = () => {
             groupedDocs={groupedDocs}
             hasProject={hasProject}
             isLoading={isLoading}
+            isProjectCollapsed={isProjectCollapsed}
             onSelectDoc={handleSelectDoc}
+            onToggleProject={toggleProject}
             onToggleGroup={toggleGroup}
+            projectName={projectName}
+            projectPathLabel={projectPathLabel}
             t={t}
           />
         </div>

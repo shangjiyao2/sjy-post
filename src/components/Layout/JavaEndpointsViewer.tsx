@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button, Empty, Input, Modal, Radio, Spin, message } from 'antd';
+import { Button, Empty, Input, Modal, Radio, Select, Spin, message } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import { open } from '@tauri-apps/plugin-dialog';
 import type { StoredJavaProject } from '../../services/api';
@@ -49,7 +49,7 @@ function sameEndpointIds(current: string[], next: string[]) {
 
 const JavaEndpointsViewer: React.FC = () => {
   const { t } = useTranslation();
-  const { activeProjectPath, project, openProject: openApiProject, refreshTree } = useProjectStore();
+  const { activeProjectPath, collections, openProject: openApiProject, refreshTree, setActiveProject } = useProjectStore();
   const { setActiveNavItem } = useNavStore();
   const { loadDocs } = useApiDocStore();
 
@@ -74,7 +74,8 @@ const JavaEndpointsViewer: React.FC = () => {
   const [searchValue, setSearchValue] = useState('');
   const [selectedEndpoints, setSelectedEndpoints] = useState<string[]>([]);
   const [importModalVisible, setImportModalVisible] = useState(false);
-  const [importTarget, setImportTarget] = useState<'current' | 'new'>('current');
+  const [importTarget, setImportTarget] = useState<'existing' | 'new'>('new');
+  const [selectedImportProjectPath, setSelectedImportProjectPath] = useState<string | null>(null);
   const [newProjectName, setNewProjectName] = useState('');
   const [newProjectPath, setNewProjectPath] = useState('');
   const [duplicateConfirmVisible, setDuplicateConfirmVisible] = useState(false);
@@ -109,11 +110,34 @@ const JavaEndpointsViewer: React.FC = () => {
   const normalizedSearch = searchValue.trim().toLowerCase();
   const selectedEndpointSet = useMemo(() => new Set(selectedEndpoints), [selectedEndpoints]);
   const newEndpointIdSet = useMemo(() => new Set(newEndpointIds), [newEndpointIds]);
+  const collectionOptions = useMemo(
+    () => Object.entries(collections).map(([projectPath, entry]) => ({
+      value: projectPath,
+      label: `${entry.project.name} · ${formatProjectPathLabel(projectPath)}`,
+    })),
+    [collections],
+  );
+  const hasCollectionOptions = collectionOptions.length > 0;
+  const defaultImportProjectPath = useMemo(() => {
+    if (activeProjectPath && collections[activeProjectPath]) {
+      return activeProjectPath;
+    }
+
+    return collectionOptions[0]?.value ?? null;
+  }, [activeProjectPath, collectionOptions, collections]);
 
   const totalEndpointCount = useMemo(
     () => parsedData?.controllers.reduce((count, controller) => count + controller.endpoints.length, 0) ?? 0,
     [parsedData],
   );
+
+  useEffect(() => {
+    if (selectedImportProjectPath && collections[selectedImportProjectPath]) {
+      return;
+    }
+
+    setSelectedImportProjectPath(defaultImportProjectPath);
+  }, [collections, defaultImportProjectPath, selectedImportProjectPath]);
 
   const endpointGroups = useMemo<EndpointGroup[]>(() => {
     if (!parsedData) return [];
@@ -320,6 +344,15 @@ const JavaEndpointsViewer: React.FC = () => {
       message.warning(t('javaImport.selectEndpoints'));
       return;
     }
+
+    if (hasCollectionOptions) {
+      setImportTarget('existing');
+      setSelectedImportProjectPath(defaultImportProjectPath);
+    } else {
+      setImportTarget('new');
+      setSelectedImportProjectPath(null);
+    }
+
     setImportModalVisible(true);
   };
 
@@ -346,8 +379,8 @@ const JavaEndpointsViewer: React.FC = () => {
       return;
     }
 
-    if (importTarget === 'current' && !activeProjectPath) {
-      message.warning(t('javaImport.openProjectFirst'));
+    if (importTarget === 'existing' && !selectedImportProjectPath) {
+      message.warning(t('javaImport.selectCollectionFirst'));
       return;
     }
 
@@ -362,7 +395,7 @@ const JavaEndpointsViewer: React.FC = () => {
 
     setIsLoading(true);
     try {
-      const targetPath = importTarget === 'current' ? activeProjectPath! : newProjectPath;
+      const targetPath = importTarget === 'existing' ? selectedImportProjectPath! : newProjectPath;
       const targetName = importTarget === 'new' ? newProjectName : undefined;
 
       const result = await api.importJavaEndpoints({
@@ -386,9 +419,11 @@ const JavaEndpointsViewer: React.FC = () => {
         } catch {
           // ignore open failure, tree refresh below still runs for backend output path
         }
+      } else {
+        setActiveProject(targetPath);
       }
 
-      await refreshTree(importTarget === 'current' ? activeProjectPath! : result.projectPath);
+      await refreshTree(importTarget === 'new' ? result.projectPath : targetPath);
       setActiveNavItem('collections');
 
       setSelectedEndpoints([]);
@@ -645,13 +680,27 @@ const JavaEndpointsViewer: React.FC = () => {
           <div className="java-import-section">
             <div className="java-import-section-label">{t('javaImport.importTarget')}</div>
             <Radio.Group value={importTarget} onChange={(event) => setImportTarget(event.target.value)}>
-              <Radio value="current" disabled={!activeProjectPath}>
-                {t('javaImport.currentProjectOption')}
-                {project && <span className="java-import-project-name">({project.name})</span>}
+              <Radio value="existing" disabled={!hasCollectionOptions}>
+                {t('javaImport.existingCollectionOption')}
               </Radio>
-              <Radio value="new">{t('javaImport.newProjectOption')}</Radio>
+              <Radio value="new">{t('javaImport.newCollectionOption')}</Radio>
             </Radio.Group>
           </div>
+
+          {importTarget === 'existing' && (
+            <div className="java-import-section">
+              <div className="java-import-section-label">{t('javaImport.collectionLabel')}</div>
+              <Select
+                className="java-import-target-select"
+                showSearch
+                optionFilterProp="label"
+                placeholder={t('javaImport.selectCollection')}
+                value={selectedImportProjectPath ?? undefined}
+                onChange={setSelectedImportProjectPath}
+                options={collectionOptions}
+              />
+            </div>
+          )}
 
           {importTarget === 'new' && (
             <div className="java-import-section">

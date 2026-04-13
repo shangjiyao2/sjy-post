@@ -7,6 +7,7 @@ import { useHistoryStore } from '../../stores/historyStore';
 import RequestEditor from './RequestEditor';
 import ResponseViewer from './ResponseViewer';
 import WebSocketPanel from '../WebSocket/WebSocketPanel';
+import EnvironmentManager from '../Environment/EnvironmentManager';
 import type { HistoryEntry, RequestFile, AssertResult, TreeNode } from '../../types';
 import * as api from '../../services/api';
 import './RequestWorkspace.css';
@@ -286,7 +287,25 @@ const RequestWorkspace: React.FC = () => {
         ? new Blob([decodeBinaryBody(response.body) as unknown as BlobPart], { type: contentType })
         : new Blob([response.body], { type: `${contentType};charset=utf-8` });
 
-      downloadBlob(fileName, blob);
+      try {
+        const [{ save }, { writeFile }] = await Promise.all([
+          import('@tauri-apps/plugin-dialog'),
+          import('@tauri-apps/plugin-fs'),
+        ]);
+        const filePath = await save({
+          title: t('editor.downloadResponse'),
+          defaultPath: fileName,
+        });
+
+        if (!filePath) {
+          return;
+        }
+
+        await writeFile(filePath, new Uint8Array(await blob.arrayBuffer()));
+      } catch {
+        downloadBlob(fileName, blob);
+      }
+
       message.success(t('editor.downloadStarted'));
     } catch {
       message.error(t('editor.downloadFailed'));
@@ -350,6 +369,7 @@ const RequestWorkspace: React.FC = () => {
           onSave={tabProjectPath ? handleSave : undefined}
           onRename={handleRename}
           variables={getVariables(tabProjectPath || undefined)}
+          headerExtra={<EnvironmentManager />}
         />
       </div>
       <button

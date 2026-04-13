@@ -42,6 +42,17 @@ function escapeSqlString(value: string): string {
   return value.replace(/'/g, "''");
 }
 
+function buildQualifiedTableName(dbName: string, tableName: string): string {
+  const normalizedDbName = dbName.trim();
+  const normalizedTableName = tableName.trim();
+
+  if (!normalizedDbName) {
+    return `\`${escapeSqlString(normalizedTableName)}\``;
+  }
+
+  return `\`${escapeSqlString(normalizedDbName)}\`.\`${escapeSqlString(normalizedTableName)}\``;
+}
+
 export function buildPermissionDraftRows(
   endpoints: Array<JavaEndpoint & { controllerName: string }>,
   form: PermissionConfigFormState,
@@ -79,7 +90,7 @@ export function buildPermissionDraftRows(
 }
 
 export function buildPermissionSql(row: PermissionConfigDraftRow, dbName: string, tableName: string): string {
-  return `INSERT INTO \`${escapeSqlString(dbName)}\`.\`${escapeSqlString(tableName)}\` (\`ID\`, \`APP_ID\`, \`SERV_CODE\`, \`SERV_NAME\`, \`SERV_URL\`, \`REQUEST_TYPE\`, \`SERV_TYPE\`, \`P_SERV_ID\`, \`SERV_FCODE\`, \`SERV_LEVEL\`, \`SERV_FNAME\`, \`INSERT_TIME\`, \`CREATE_TIME\`, \`CREATE_USER\`, \`UPDATE_TIME\`, \`UPDATE_USER\`, \`DEL_FLAG\`, \`REMARK\`) VALUES ('${escapeSqlString(row.id)}', '${escapeSqlString(row.appId)}', '${escapeSqlString(row.servCode)}', '${escapeSqlString(row.servName)}', '${escapeSqlString(row.servUrl)}', '${escapeSqlString(row.requestType)}', ${row.servType ? `'${escapeSqlString(row.servType)}'` : 'NULL'}, ${row.pServId ? `'${escapeSqlString(row.pServId)}'` : 'NULL'}, '${escapeSqlString(row.servFcode)}', ${row.servLevel}, '${escapeSqlString(row.servFname)}', '${escapeSqlString(row.insertTime)}', '${escapeSqlString(row.createTime)}', '${escapeSqlString(row.createUser)}', '${escapeSqlString(row.updateTime)}', '${escapeSqlString(row.updateUser)}', '${escapeSqlString(row.delFlag)}', '${escapeSqlString(row.remark)}');`;
+  return `INSERT INTO ${buildQualifiedTableName(dbName, tableName)} (\`ID\`, \`APP_ID\`, \`SERV_CODE\`, \`SERV_NAME\`, \`SERV_URL\`, \`REQUEST_TYPE\`, \`SERV_TYPE\`, \`P_SERV_ID\`, \`SERV_FCODE\`, \`SERV_LEVEL\`, \`SERV_FNAME\`, \`INSERT_TIME\`, \`CREATE_TIME\`, \`CREATE_USER\`, \`UPDATE_TIME\`, \`UPDATE_USER\`, \`DEL_FLAG\`, \`REMARK\`) VALUES ('${escapeSqlString(row.id)}', '${escapeSqlString(row.appId)}', '${escapeSqlString(row.servCode)}', '${escapeSqlString(row.servName)}', '${escapeSqlString(row.servUrl)}', '${escapeSqlString(row.requestType)}', ${row.servType ? `'${escapeSqlString(row.servType)}'` : 'NULL'}, ${row.pServId ? `'${escapeSqlString(row.pServId)}'` : 'NULL'}, '${escapeSqlString(row.servFcode)}', ${row.servLevel}, '${escapeSqlString(row.servFname)}', '${escapeSqlString(row.insertTime)}', '${escapeSqlString(row.createTime)}', '${escapeSqlString(row.createUser)}', '${escapeSqlString(row.updateTime)}', '${escapeSqlString(row.updateUser)}', '${escapeSqlString(row.delFlag)}', '${escapeSqlString(row.remark)}');`;
 }
 
 export function buildBatchPermissionSql(rows: PermissionConfigDraftRow[], dbName: string, tableName: string): string {

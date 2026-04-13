@@ -11,21 +11,42 @@
 .request-editor-header {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   min-height: 22px;
   margin-bottom: 10px;
+  gap: 12px;
+}
+
+.request-editor-header-main {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+}
+
+.request-editor-header-extra {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-shrink: 0;
 }
 
 .request-editor-title {
+  display: block;
   font-size: 14px;
   font-weight: 700;
   line-height: 1.2;
   color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .request-editor-title-button {
   display: inline-flex;
   align-items: center;
   max-width: 100%;
+  min-width: 0;
   padding: 0;
   border: 0;
   background: transparent;

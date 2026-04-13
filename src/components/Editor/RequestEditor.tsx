@@ -49,6 +49,7 @@ interface RequestEditorProps {
   onSave?: () => void;
   onRename?: (newName: string) => Promise<void>;
   variables?: Record<string, string>;
+  headerExtra?: React.ReactNode;
 }
 
 const METHOD_OPTIONS = HTTP_METHODS.map((method) => ({
@@ -72,6 +73,7 @@ const RequestEditor: React.FC<RequestEditorProps> = ({
   onSave,
   onRename,
   variables,
+  headerExtra,
 }) => {
   const { t } = useTranslation();
   const [activeBodyTab, setActiveBodyTab] = useState(() => request.body.type === 'none' ? 'none' : request.body.type);
@@ -195,41 +197,48 @@ const RequestEditor: React.FC<RequestEditorProps> = ({
   return (
     <div className="request-editor">
       <div className="request-editor-header">
-        {isRenamingTitle ? (
-          <Input
-            ref={titleInputRef}
-            size="small"
-            value={titleDraft}
-            onChange={(e) => setTitleDraft(e.target.value)}
-            onBlur={() => {
-              void confirmRename();
-            }}
-            onPressEnter={(e) => e.currentTarget.blur()}
-            onKeyDown={(e) => {
-              if (e.key === 'Escape') {
-                cancelRenameRef.current = true;
-                e.preventDefault();
-                e.stopPropagation();
-                cancelRename();
-              }
-            }}
-            className="request-editor-title-input"
-            disabled={isSubmittingRename}
-          />
-        ) : (
-          <button
-            type="button"
-            className="request-editor-title-button"
-            onDoubleClick={startRename}
-            onKeyDown={(e) => {
-              if ((e.key === 'Enter' || e.key === ' ') && onRename) {
-                e.preventDefault();
-                startRename();
-              }
-            }}
-          >
-            <span className="request-editor-title">{title}</span>
-          </button>
+        <div className="request-editor-header-main">
+          {isRenamingTitle ? (
+            <Input
+              ref={titleInputRef}
+              size="small"
+              value={titleDraft}
+              onChange={(e) => setTitleDraft(e.target.value)}
+              onBlur={() => {
+                void confirmRename();
+              }}
+              onPressEnter={(e) => e.currentTarget.blur()}
+              onKeyDown={(e) => {
+                if (e.key === 'Escape') {
+                  cancelRenameRef.current = true;
+                  e.preventDefault();
+                  e.stopPropagation();
+                  cancelRename();
+                }
+              }}
+              className="request-editor-title-input"
+              disabled={isSubmittingRename}
+            />
+          ) : (
+            <button
+              type="button"
+              className="request-editor-title-button"
+              onDoubleClick={startRename}
+              onKeyDown={(e) => {
+                if ((e.key === 'Enter' || e.key === ' ') && onRename) {
+                  e.preventDefault();
+                  startRename();
+                }
+              }}
+            >
+              <span className="request-editor-title">{title}</span>
+            </button>
+          )}
+        </div>
+        {headerExtra && (
+          <div className="request-editor-header-extra">
+            {headerExtra}
+          </div>
         )}
       </div>
 
