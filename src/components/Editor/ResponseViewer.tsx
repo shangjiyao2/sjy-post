@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { Empty, Spin, Table } from 'antd';
-import { CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Empty, Spin, Table, message } from 'antd';
+import { CheckCircleOutlined, CloseCircleOutlined, CopyOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import type { AssertResult, HttpResponse } from '../../types';
 import JsonTreeView from './JsonTreeView';
@@ -50,8 +50,9 @@ const ResponseBodySection: React.FC<{
   response: HttpResponse;
   bodyViewMode: 'raw' | 'tree';
   onChangeBodyViewMode: (mode: 'raw' | 'tree') => void;
+  onCopyBody: () => void;
   t: ReturnType<typeof useTranslation>['t'];
-}> = ({ response, bodyViewMode, onChangeBodyViewMode, t }) => {
+}> = ({ response, bodyViewMode, onChangeBodyViewMode, onCopyBody, t }) => {
   if (response.body_type === 'binary') {
     return (
       <div className="response-body">
@@ -64,8 +65,8 @@ const ResponseBodySection: React.FC<{
 
   return (
     <div className="response-body">
-      {response.body_type === 'json' && (
-        <div className="body-view-toggle">
+      <div className="body-view-toggle">
+        {response.body_type === 'json' ? (
           <div className="response-body-toggle">
             <button
               type="button"
@@ -82,11 +83,21 @@ const ResponseBodySection: React.FC<{
               {t('response.treeView')}
             </button>
           </div>
-        </div>
-      )}
+        ) : (
+          <div />
+        )}
+        <button
+          type="button"
+          className="response-copy-button"
+          onClick={onCopyBody}
+        >
+          <CopyOutlined />
+          {t('response.copyBody')}
+        </button>
+      </div>
 
       {bodyViewMode === 'tree' && response.body_type === 'json' ? (
-        <JsonTreeView data={response.body} />
+        <JsonTreeView data={response.body} defaultExpandAll />
       ) : (
         <div className="response-code-card">
           <pre className="response-code mono">{formatBody(response.body, response.body_type)}</pre>
@@ -161,8 +172,23 @@ const ResponseTestsCollapsible: React.FC<{
 const ResponseViewer: React.FC<ResponseViewerProps> = ({ response, isLoading, assertResults }) => {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<ResponseTab>('body');
-  const [bodyViewMode, setBodyViewMode] = useState<'raw' | 'tree'>('raw');
+  const [bodyViewMode, setBodyViewMode] = useState<'raw' | 'tree'>('tree');
   const [searchQuery, setSearchQuery] = useState('');
+
+  useEffect(() => {
+    if (!response) {
+      return;
+    }
+
+    setBodyViewMode(response.body_type === 'json' ? 'tree' : 'raw');
+  }, [response]);
+
+  const formattedResponseBody = useMemo(() => {
+    if (!response) {
+      return '';
+    }
+    return formatBody(response.body, response.body_type);
+  }, [response]);
 
   const normalizedSearchQuery = searchQuery.trim().toLowerCase();
   const hasTests = !!assertResults && assertResults.length > 0;
@@ -233,6 +259,14 @@ const ResponseViewer: React.FC<ResponseViewerProps> = ({ response, isLoading, as
       response={response}
       bodyViewMode={bodyViewMode}
       onChangeBodyViewMode={setBodyViewMode}
+      onCopyBody={async () => {
+        try {
+          await navigator.clipboard.writeText(formattedResponseBody);
+          message.success(t('response.bodyCopied'));
+        } catch {
+          message.error(t('response.copyFailed'));
+        }
+      }}
       t={t}
     />
   );

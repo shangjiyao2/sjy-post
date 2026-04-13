@@ -227,12 +227,16 @@
 .body-editor {
   display: flex;
   flex-direction: column;
+  flex: 1;
+  min-height: 0;
   min-width: 0;
 }
 
 .body-editor-content {
   display: flex;
+  flex: 1;
   width: 100%;
+  min-height: 0;
   min-width: 0;
 }
 
@@ -532,14 +536,25 @@
 }
 
 .request-tabs > .ant-tabs-content-holder,
-.request-tabs > .ant-tabs-content-holder > .ant-tabs-content,
-.request-tabs > .ant-tabs-content-holder > .ant-tabs-content > .ant-tabs-tabpane {
+.request-tabs > .ant-tabs-content-holder > .ant-tabs-content {
   display: flex;
   flex: 1;
   flex-direction: column;
   min-height: 0;
   min-width: 0;
   overflow: hidden;
+}
+
+.request-tabs > .ant-tabs-content-holder > .ant-tabs-content > .ant-tabs-tabpane {
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.request-tabs > .ant-tabs-content-holder > .ant-tabs-content > .ant-tabs-tabpane:not(.ant-tabs-tabpane-hidden) {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
 }
 
 .request-editor .ant-tabs-tab {

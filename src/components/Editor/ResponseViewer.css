@@ -196,6 +196,13 @@
   gap: 6px;
 }
 
+.body-view-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
 .response-body-toggle-item {
   height: 26px;
   padding: 0 10px;
@@ -211,6 +218,29 @@
   background: var(--pill-active-bg);
   border-color: var(--pill-active-border);
   color: var(--text-inverse);
+}
+
+.response-copy-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border-primary);
+  background: var(--surface-1);
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+  transition:
+    background var(--transition-fast),
+    color var(--transition-fast),
+    border-color var(--transition-fast);
+}
+
+.response-copy-button:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
 }
 
 /* Raw code card (Pencil: respBody) */

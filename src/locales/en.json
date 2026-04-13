@@ -1,7 +1,7 @@
 {
   "app": {
     "title": "SjyPost",
-    "version": "v0.1.0",
+    "version": "v0.1.5",
     "toggleTheme": "Theme",
     "themeLight": "Light",
     "themeDark": "Dark",
@@ -232,6 +232,9 @@
     "tests": "Tests",
     "rawView": "Raw",
     "treeView": "Tree",
+    "copyBody": "Copy Response",
+    "bodyCopied": "Response copied!",
+    "copyFailed": "Copy failed",
     "time": "Time:",
     "size": "Size:",
     "name": "Name",

@@ -1,7 +1,7 @@
 {
   "app": {
     "title": "SjyPost",
-    "version": "v0.1.0",
+    "version": "v0.1.5",
     "toggleTheme": "主题",
     "themeLight": "浅色",
     "themeDark": "暗色",
@@ -232,6 +232,9 @@
     "tests": "测试",
     "rawView": "原始",
     "treeView": "树形",
+    "copyBody": "复制响应",
+    "bodyCopied": "响应内容已复制！",
+    "copyFailed": "复制失败",
     "time": "耗时：",
     "size": "大小：",
     "name": "名称",

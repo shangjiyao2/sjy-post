@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { Input, Button, Tooltip, message } from 'antd';
 import {
   CaretRightOutlined,
@@ -12,6 +12,7 @@ import './JsonTreeView.css';
 interface JsonTreeViewProps {
   data: unknown;
   searchable?: boolean;
+  defaultExpandAll?: boolean;
 }
 
 interface JsonNodeProps {
@@ -24,10 +25,31 @@ interface JsonNodeProps {
   onToggle: (path: string) => void;
 }
 
-const JsonTreeView: React.FC<JsonTreeViewProps> = ({ data, searchable = true }) => {
+const collectExpandablePaths = (obj: unknown, path = '$'): Set<string> => {
+  const paths = new Set<string>();
+
+  const walk = (value: unknown, currentPath: string) => {
+    paths.add(currentPath);
+    if (value && typeof value === 'object') {
+      if (Array.isArray(value)) {
+        value.forEach((item, index) => {
+          walk(item, `${currentPath}[${index}]`);
+        });
+      } else {
+        Object.entries(value).forEach(([key, child]) => {
+          walk(child, `${currentPath}.${key}`);
+        });
+      }
+    }
+  };
+
+  walk(obj, path);
+  return paths;
+};
+
+const JsonTreeView: React.FC<JsonTreeViewProps> = ({ data, searchable = true, defaultExpandAll = false }) => {
   const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
-  const [expandedPaths, setExpandedPaths] = useState<Set<string>>(new Set(['$']));
 
   const parsedData = useMemo(() => {
     if (typeof data === 'string') {
@@ -39,6 +61,17 @@ const JsonTreeView: React.FC<JsonTreeViewProps> = ({ data, searchable = true }) 
     }
     return data;
   }, [data]);
+
+  const initialExpandedPaths = useMemo(
+    () => (defaultExpandAll ? collectExpandablePaths(parsedData) : new Set(['$'])),
+    [defaultExpandAll, parsedData]
+  );
+
+  const [expandedPaths, setExpandedPaths] = useState<Set<string>>(initialExpandedPaths);
+
+  useEffect(() => {
+    setExpandedPaths(initialExpandedPaths);
+  }, [initialExpandedPaths]);
 
   const handleToggle = useCallback((path: string) => {
     setExpandedPaths(prev => {
@@ -53,23 +86,7 @@ const JsonTreeView: React.FC<JsonTreeViewProps> = ({ data, searchable = true }) 
   }, []);
 
   const expandAll = useCallback(() => {
-    const paths = new Set<string>();
-    const collectPaths = (obj: unknown, path: string) => {
-      paths.add(path);
-      if (obj && typeof obj === 'object') {
-        if (Array.isArray(obj)) {
-          obj.forEach((item, index) => {
-            collectPaths(item, `${path}[${index}]`);
-          });
-        } else {
-          Object.entries(obj).forEach(([key, val]) => {
-            collectPaths(val, `${path}.${key}`);
-          });
-        }
-      }
-    };
-    collectPaths(parsedData, '$');
-    setExpandedPaths(paths);
+    setExpandedPaths(collectExpandablePaths(parsedData));
   }, [parsedData]);
 
   const collapseAll = useCallback(() => {

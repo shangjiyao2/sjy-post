@@ -318,7 +318,7 @@ const RequestEditor: React.FC<RequestEditorProps> = ({
                       value={getBodyContent()}
                       onChange={handleBodyChange}
                       language={request.body.type === 'json' ? 'json' : 'text'}
-                      height={200}
+                      height="100%"
                     />
                   </div>
                 )}

@@ -11,7 +11,7 @@ const StatusBar: React.FC = () => {
         <span className="status-item">{t('app.ready')}</span>
       </div>
       <div className="status-bar-right">
-        <span className="status-item">v0.1.0</span>
+        <span className="status-item">{t('app.version')}</span>
       </div>
     </div>
   );
