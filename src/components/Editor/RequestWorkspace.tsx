@@ -11,6 +11,73 @@ import type { HistoryEntry, RequestFile, AssertResult, TreeNode } from '../../ty
 import * as api from '../../services/api';
 import './RequestWorkspace.css';
 
+const getHeaderValue = (headers: Record<string, string>, name: string): string | undefined => {
+  const normalizedName = name.toLowerCase();
+  return Object.entries(headers).find(([key]) => key.toLowerCase() === normalizedName)?.[1];
+};
+
+const decodeBinaryBody = (body: string): Uint8Array => {
+  const binary = atob(body);
+  const bytes = new Uint8Array(binary.length);
+  for (let index = 0; index < binary.length; index += 1) {
+    bytes[index] = binary.charCodeAt(index);
+  }
+  return bytes;
+};
+
+const getResponseFileExtension = (contentType: string, bodyType: RequestFile['body']['type'] | 'response-binary' | 'response-json' | 'response-text' | 'response-html' | 'response-xml'): string => {
+  if (contentType.includes('application/json')) return 'json';
+  if (contentType.includes('text/html')) return 'html';
+  if (contentType.includes('application/xml') || contentType.includes('text/xml')) return 'xml';
+  if (contentType.startsWith('text/')) return 'txt';
+  if (contentType.includes('pdf')) return 'pdf';
+  if (contentType.includes('zip')) return 'zip';
+  if (contentType.includes('octet-stream')) return 'bin';
+
+  switch (bodyType) {
+    case 'response-json':
+      return 'json';
+    case 'response-html':
+      return 'html';
+    case 'response-xml':
+      return 'xml';
+    case 'response-binary':
+      return 'bin';
+    default:
+      return 'txt';
+  }
+};
+
+const getDownloadFileName = (request: RequestFile, headers: Record<string, string>, bodyType: 'json' | 'text' | 'html' | 'xml' | 'binary'): string => {
+  const contentDisposition = getHeaderValue(headers, 'content-disposition') || '';
+  const utf8FileNameMatch = contentDisposition.match(/filename\*\s*=\s*UTF-8''([^;]+)/i);
+  const asciiFileNameMatch = contentDisposition.match(/filename\s*=\s*"([^"]+)"|filename\s*=\s*([^;]+)/i);
+
+  const decodedDispositionName = utf8FileNameMatch?.[1]
+    ? decodeURIComponent(utf8FileNameMatch[1])
+    : asciiFileNameMatch?.[1] || asciiFileNameMatch?.[2];
+
+  const baseName = (decodedDispositionName || request.name || 'response')
+    .trim()
+    .replaceAll(/[\\/:*?"<>|]+/g, '_');
+
+  if (/\.[a-z0-9]+$/i.test(baseName)) {
+    return baseName;
+  }
+
+  const contentType = (getHeaderValue(headers, 'content-type') || '').toLowerCase();
+  return `${baseName}.${getResponseFileExtension(contentType, `response-${bodyType}`)}`;
+};
+
+const downloadBlob = (fileName: string, blob: Blob) => {
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = fileName;
+  anchor.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+};
+
 // Helper to get body content as string
 const getBodyString = (request: RequestFile): string | undefined => {
   switch (request.body.type) {
@@ -158,7 +225,7 @@ const RequestWorkspace: React.FC = () => {
     updateRequest(activeTab.id, updates);
   };
 
-  const handleSend = async () => {
+  const sendAndStoreResponse = async () => {
     const variables = getVariables(tabProjectPath || undefined);
     setAssertResults([]); // Clear previous results
     try {
@@ -194,8 +261,35 @@ const RequestWorkspace: React.FC = () => {
 
         addEntry(tabProjectPath, historyEntry);
       }
+
+      return response;
     } catch {
       // Error already handled in store
+      return undefined;
+    }
+  };
+
+  const handleSend = async () => {
+    await sendAndStoreResponse();
+  };
+
+  const handleDownloadResponse = async () => {
+    const response = await sendAndStoreResponse();
+    if (!response) {
+      return;
+    }
+
+    try {
+      const contentType = getHeaderValue(response.headers, 'content-type') || 'application/octet-stream';
+      const fileName = getDownloadFileName(activeTab.request, response.headers, response.body_type);
+      const blob = response.body_type === 'binary'
+        ? new Blob([decodeBinaryBody(response.body) as unknown as BlobPart], { type: contentType })
+        : new Blob([response.body], { type: `${contentType};charset=utf-8` });
+
+      downloadBlob(fileName, blob);
+      message.success(t('editor.downloadStarted'));
+    } catch {
+      message.error(t('editor.downloadFailed'));
     }
   };
 
@@ -252,6 +346,7 @@ const RequestWorkspace: React.FC = () => {
           isLoading={activeTab.isLoading}
           onChange={handleChange}
           onSend={handleSend}
+          onDownload={handleDownloadResponse}
           onSave={tabProjectPath ? handleSave : undefined}
           onRename={handleRename}
           variables={getVariables(tabProjectPath || undefined)}

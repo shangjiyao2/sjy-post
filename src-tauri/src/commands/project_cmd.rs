@@ -17,6 +17,12 @@ pub async fn open_project(path: String) -> AppResult<Project> {
 }
 
 #[tauri::command]
+pub async fn rename_project(path: String, name: String) -> AppResult<Project> {
+    let store = ProjectStore::new();
+    store.rename_project(Path::new(&path), &name).await
+}
+
+#[tauri::command]
 pub async fn read_project_tree(project_path: String) -> AppResult<Vec<TreeNode>> {
     let store = ProjectStore::new();
     store.read_tree(Path::new(&project_path)).await

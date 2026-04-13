@@ -26,6 +26,7 @@ pub fn run() {
             request_cmd::send_request,
             project_cmd::create_project,
             project_cmd::open_project,
+            project_cmd::rename_project,
             project_cmd::read_project_tree,
             project_cmd::create_folder,
             project_cmd::rename_node,

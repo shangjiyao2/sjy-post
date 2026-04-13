@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Input, Select, Button, Tabs, Table, Space, Radio, Form, Checkbox, message, type InputRef, type RadioChangeEvent } from 'antd';
-import { SendOutlined, SaveOutlined, PlusOutlined, DeleteOutlined, UploadOutlined } from '@ant-design/icons';
+import { Input, Select, Button, Tabs, Table, Space, Radio, Form, Checkbox, message, Dropdown, type InputRef, type RadioChangeEvent } from 'antd';
+import { SendOutlined, SaveOutlined, PlusOutlined, DeleteOutlined, UploadOutlined, DownOutlined } from '@ant-design/icons';
 import type { RequestFile, HttpMethod, KeyValueItem, AuthConfig, Assertion, AssertionType, AssertionOperator } from '../../types';
 import { HTTP_METHODS } from '../../types';
 import VariableHighlightInput from '../common/VariableHighlightInput';
@@ -45,6 +45,7 @@ interface RequestEditorProps {
   isLoading: boolean;
   onChange: (updates: Partial<RequestFile>) => void;
   onSend: () => void;
+  onDownload?: () => void;
   onSave?: () => void;
   onRename?: (newName: string) => Promise<void>;
   variables?: Record<string, string>;
@@ -67,6 +68,7 @@ const RequestEditor: React.FC<RequestEditorProps> = ({
   isLoading,
   onChange,
   onSend,
+  onDownload,
   onSave,
   onRename,
   variables,
@@ -257,14 +259,40 @@ const RequestEditor: React.FC<RequestEditorProps> = ({
               {t('editor.save')}
             </Button>
           )}
-          <Button
-            type="primary"
-            icon={<SendOutlined />}
-            loading={isLoading}
-            onClick={onSend}
-          >
-            {t('editor.send')}
-          </Button>
+          <div className="request-send-actions">
+            <Button
+              type="primary"
+              icon={<SendOutlined />}
+              loading={isLoading}
+              onClick={onSend}
+            >
+              {t('editor.send')}
+            </Button>
+            <Dropdown
+              trigger={['click']}
+              menu={{
+                items: [
+                  {
+                    key: 'download-response',
+                    label: t('editor.downloadResponse'),
+                  },
+                ],
+                onClick: ({ key }) => {
+                  if (key === 'download-response') {
+                    onDownload?.();
+                  }
+                },
+              }}
+              disabled={!onDownload || isLoading}
+            >
+              <Button
+                type="primary"
+                className="request-send-dropdown"
+                aria-label={t('editor.moreActions')}
+                icon={<DownOutlined />}
+              />
+            </Dropdown>
+          </div>
         </Space>
       </div>
 

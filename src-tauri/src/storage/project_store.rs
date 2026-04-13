@@ -32,26 +32,13 @@ impl ProjectStore {
         let config = ProjectConfig {
             version: "1.0.0".to_string(),
             name: name.to_string(),
-            active_environment: Some("dev".to_string()),
+            active_environment: None,
             settings: ProjectSettings::default(),
         };
 
         // Write config file
         let config_path = path.join(PROJECT_CONFIG_FILE);
         self.file_manager.write_json(&config_path, &config).await?;
-
-        // Create environments directory
-        let env_dir = path.join(ENVIRONMENTS_DIR);
-        self.file_manager.create_dir(&env_dir).await?;
-
-        // Create default dev environment
-        let dev_env = Environment {
-            id: "dev".to_string(),
-            name: "Development".to_string(),
-            variables: std::collections::HashMap::new(),
-        };
-        let dev_env_path = env_dir.join("dev.env.json");
-        self.file_manager.write_json(&dev_env_path, &dev_env).await?;
 
         Ok(Project {
             path: path.to_string_lossy().to_string(),
@@ -69,6 +56,20 @@ impl ProjectStore {
         }
 
         let config: ProjectConfig = self.file_manager.read_json(&config_path).await?;
+
+        Ok(Project {
+            path: path.to_string_lossy().to_string(),
+            name: config.name.clone(),
+            config,
+        })
+    }
+
+    /// Rename project display name in project config
+    pub async fn rename_project(&self, path: &Path, name: &str) -> AppResult<Project> {
+        let config_path = path.join(PROJECT_CONFIG_FILE);
+        let mut config: ProjectConfig = self.file_manager.read_json(&config_path).await?;
+        config.name = name.to_string();
+        self.file_manager.write_json(&config_path, &config).await?;
 
         Ok(Project {
             path: path.to_string_lossy().to_string(),

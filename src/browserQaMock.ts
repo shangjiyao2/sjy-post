@@ -970,6 +970,18 @@ const installBrowserQaMocks = () => {
         const { path } = payload as { path: string };
         return getQaProject(path);
       }
+      case 'rename_project': {
+        const { path, name } = payload as { path: string; name: string };
+        const project = getQaProject(path);
+        return {
+          ...project,
+          name,
+          config: {
+            ...project.config,
+            name,
+          },
+        };
+      }
       case 'read_project_tree': {
         const { projectPath } = payload as { projectPath: string };
         return getQaTree(projectPath);

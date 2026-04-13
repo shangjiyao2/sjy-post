@@ -4,7 +4,6 @@ import * as api from '../services/api';
 import { useGlobalEnvironmentStore } from './globalEnvironmentStore';
 
 export const STORAGE_KEY = 'sjypost-collections';
-const DEFAULT_ENVIRONMENT_ID = 'dev';
 const loadEnvironmentPromises = new Map<string, Promise<void>>();
 
 interface ProjectState {
@@ -19,6 +18,7 @@ interface ProjectState {
   // Project lifecycle
   openProject: (path: string) => Promise<void>;
   createProject: (path: string, name: string) => Promise<void>;
+  renameProject: (projectPath: string, name: string) => Promise<void>;
   closeCollection: (projectPath: string) => void;
 
   // Per-project tree operations
@@ -81,10 +81,6 @@ function loadPersistedPaths(): { paths: string[]; activeProjectPath: string | nu
 function resolveActiveEnvironmentId(environments: Environment[], preferredId?: string | null): string | null {
   if (preferredId && environments.some((environment) => environment.id === preferredId)) {
     return preferredId;
-  }
-
-  if (environments.some((environment) => environment.id === DEFAULT_ENVIRONMENT_ID)) {
-    return DEFAULT_ENVIRONMENT_ID;
   }
 
   return environments[0]?.id ?? null;
@@ -156,7 +152,7 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
       const treeData = await api.readProjectTree(path);
 
       let environments: Environment[] = [];
-      let activeEnv: string | null = DEFAULT_ENVIRONMENT_ID;
+      let activeEnv: string | null = null;
       try {
         environments = await api.listEnvironments(path);
         activeEnv = resolveActiveEnvironmentId(environments, project.config.active_environment);
@@ -228,6 +224,38 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
       set({ error: String(e), isLoading: false });
       throw e;
     }
+  },
+
+  renameProject: async (projectPath, name) => {
+    const entry = get().collections[projectPath];
+    if (!entry) {
+      throw new Error('No project open');
+    }
+
+    const project = await api.renameProject(projectPath, name);
+
+    set((state) => {
+      const currentEntry = state.collections[projectPath];
+      if (!currentEntry) {
+        return state;
+      }
+
+      const nextEntry: CollectionEntry = {
+        ...currentEntry,
+        project,
+      };
+      const collections = {
+        ...state.collections,
+        [projectPath]: nextEntry,
+      };
+
+      const updates: Partial<ProjectState> = { collections };
+      if (state.activeProjectPath === projectPath) {
+        updates.project = project;
+      }
+
+      return updates as ProjectState;
+    });
   },
 
   closeCollection: (projectPath) => {
@@ -418,18 +446,8 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
 
   getVariables: (projectPath?) => {
     const globalVariables = useGlobalEnvironmentStore.getState().getVariables();
-    const path = projectPath || get().activeProjectPath;
-    if (!path) {
-      return globalVariables;
-    }
-
-    const entry = get().collections[path];
-    if (!entry?.activeEnvironment) {
-      return globalVariables;
-    }
-
-    const projectVariables = entry.environments.find((environment) => environment.id === entry.activeEnvironment)?.variables;
-    return projectVariables ? { ...globalVariables, ...projectVariables } : globalVariables;
+    void projectPath;
+    return globalVariables;
   },
 
   // Restore saved collections on startup

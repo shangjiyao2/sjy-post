@@ -224,6 +224,28 @@
   color: var(--text-muted);
 }
 
+.request-send-actions {
+  display: inline-flex;
+  align-items: stretch;
+}
+
+.request-send-actions .ant-btn {
+  border-radius: 8px;
+}
+
+.request-send-actions > .ant-btn {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.request-send-dropdown.ant-btn {
+  min-width: 34px;
+  padding-inline: 8px;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  border-left-color: color-mix(in srgb, #ffffff 20%, transparent);
+}
+
 .body-editor {
   display: flex;
   flex-direction: column;

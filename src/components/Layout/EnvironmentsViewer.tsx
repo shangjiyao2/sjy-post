@@ -1,59 +1,28 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Empty, Dropdown, Modal, message } from 'antd';
 import type { MenuProps } from 'antd';
 import { MoreOutlined, PlusOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { SearchIcon } from '../Sidebar/TreeIcons';
 import { useGlobalEnvironmentStore } from '../../stores/globalEnvironmentStore';
-import { useProjectStore } from '../../stores/projectStore';
 import { useHorizontalPaneResize } from '../../hooks/useHorizontalPaneResize';
-import { buildDuplicateEnvironmentName, createEnvironmentId, formatProjectPathLabel, type Environment } from '../../types';
+import { buildDuplicateEnvironmentName, createEnvironmentId, type Environment } from '../../types';
 import './EnvironmentsViewer.css';
 import './SplitPaneDivider.css';
 
 type TranslateFn = ReturnType<typeof useTranslation>['t'];
 
-type EnvScope = 'global' | 'project';
-
-type EnvRow = {
-  id: string;
-  name: string;
-  scope: EnvScope;
-  isActive: boolean;
-  selectionKey: string;
-  projectPath?: string;
-};
-
 type VarRow = { id: string; key: string; value: string };
 
-type SelectedEnvRef = { scope: EnvScope; id: string; projectPath?: string };
-
 type NameModalState = {
-  ref: SelectedEnvRef;
+  id: string;
   value: string;
 };
 
-type ProjectGroup = {
-  projectPath: string;
-  projectName: string;
-  projectLabel: string;
-  rows: EnvRow[];
-};
-
-function getSelectionKey(scope: EnvScope, id: string, projectPath?: string): string {
-  return scope === 'global' ? `custom:${id}` : `project:${projectPath ?? ''}:${id}`;
-}
-
-function isSameSelection(left: SelectedEnvRef | null, right: SelectedEnvRef | null): boolean {
-  if (!left || !right) {
-    return left === right;
-  }
-
-  return left.scope === right.scope && left.id === right.id && left.projectPath === right.projectPath;
-}
-
 function buildVarRows(environment: Environment | null): VarRow[] {
-  if (!environment) return [];
+  if (!environment) {
+    return [];
+  }
 
   return Object.entries(environment.variables || {}).map(([key, value], index) => ({
     id: `${index}`,
@@ -63,7 +32,9 @@ function buildVarRows(environment: Environment | null): VarRow[] {
 }
 
 function sameVarRows(left: VarRow[], right: VarRow[]): boolean {
-  if (left.length !== right.length) return false;
+  if (left.length !== right.length) {
+    return false;
+  }
 
   return left.every((row, index) => {
     const nextRow = right[index];
@@ -96,57 +67,9 @@ function sameVariables(left: Record<string, string>, right: Record<string, strin
   return leftKeys.every((key) => left[key] === right[key]);
 }
 
-function buildGlobalFallback(activeId: string | null, environments: Environment[]): SelectedEnvRef | null {
+function buildGlobalFallback(activeId: string | null, environments: Environment[]): string | null {
   const activeEnvironment = activeId ? environments.find((environment) => environment.id === activeId) : null;
-  const nextEnvironment = activeEnvironment ?? environments[0];
-  return nextEnvironment ? { scope: 'global', id: nextEnvironment.id } : null;
-}
-
-function buildProjectFallback(
-  collections: ReturnType<typeof useProjectStore.getState>['collections'],
-  preferredProjectPath?: string | null,
-): SelectedEnvRef | null {
-  const projectPaths = preferredProjectPath
-    ? [preferredProjectPath, ...Object.keys(collections).filter((path) => path !== preferredProjectPath)]
-    : Object.keys(collections);
-
-  for (const projectPath of projectPaths) {
-    const entry = collections[projectPath];
-    if (!entry) {
-      continue;
-    }
-
-    const activeEnvironment = entry.activeEnvironment
-      ? entry.environments.find((environment) => environment.id === entry.activeEnvironment)
-      : null;
-    const nextEnvironment = activeEnvironment ?? entry.environments[0];
-    if (nextEnvironment) {
-      return { scope: 'project', id: nextEnvironment.id, projectPath };
-    }
-  }
-
-  return null;
-}
-
-function buildDetailChipText(t: TranslateFn, selectedEnv: Environment | null, selectedRef: SelectedEnvRef | null): string {
-  if (selectedEnv === null) {
-    return t('environment.notSelected');
-  }
-
-  return selectedRef?.scope === 'global' ? t('environment.customGroup') : t('environment.projectGroup');
-}
-
-function buildDetailMetaText(
-  t: TranslateFn,
-  selectedRef: SelectedEnvRef | null,
-  selectedProjectEntry: ReturnType<typeof useProjectStore.getState>['collections'][string] | undefined,
-): string {
-  if (selectedRef?.scope !== 'project') {
-    return t('environment.customGroup');
-  }
-
-  const projectLabel = selectedProjectEntry?.project.name || formatProjectPathLabel(selectedRef.projectPath || '');
-  return `${t('environment.collectionLabel')}: ${projectLabel}`;
+  return activeEnvironment?.id ?? environments[0]?.id ?? null;
 }
 
 function SelectionCheckbox({
@@ -162,9 +85,10 @@ function SelectionCheckbox({
 }
 
 function EnvironmentRow({
-  row,
+  environment,
   isChecked,
   isSelected,
+  isActive,
   onSelect,
   onToggleSelection,
   onRename,
@@ -172,9 +96,10 @@ function EnvironmentRow({
   onDelete,
   t,
 }: Readonly<{
-  row: EnvRow;
+  environment: Environment;
   isChecked: boolean;
   isSelected: boolean;
+  isActive: boolean;
   onSelect: () => void;
   onToggleSelection: () => void;
   onRename: () => void;
@@ -209,12 +134,12 @@ function EnvironmentRow({
 
   return (
     <div className={`env-row ${isSelected ? 'selected' : ''}`}>
-      <SelectionCheckbox checked={isChecked} label={row.name} onChange={onToggleSelection} />
+      <SelectionCheckbox checked={isChecked} label={environment.name} onChange={onToggleSelection} />
       <button type="button" className="env-row-main" onClick={onSelect}>
         <div className="env-row-content">
-          <div className="env-row-name">{row.name}</div>
+          <div className="env-row-name">{environment.name}</div>
         </div>
-        {row.isActive && <span className="env-row-badge">{t('environment.defaultEnvironment')}</span>}
+        {isActive && <span className="env-row-badge">{t('environment.defaultEnvironment')}</span>}
       </button>
       <Dropdown menu={actionMenu} trigger={['click']}>
         <button
@@ -236,29 +161,20 @@ function EnvironmentRow({
 const EnvironmentsViewer: React.FC = () => {
   const { t } = useTranslation();
 
-  const globalEnvironments = useGlobalEnvironmentStore((state) => state.environments);
-  const activeGlobalEnvironmentId = useGlobalEnvironmentStore((state) => state.activeEnvironmentId);
-  const isGlobalLoaded = useGlobalEnvironmentStore((state) => state.isLoaded);
-  const loadGlobalEnvironments = useGlobalEnvironmentStore((state) => state.loadEnvironments);
-  const saveGlobalEnvironment = useGlobalEnvironmentStore((state) => state.saveEnvironment);
-  const deleteGlobalEnvironment = useGlobalEnvironmentStore((state) => state.deleteEnvironment);
-  const setActiveGlobalEnvironment = useGlobalEnvironmentStore((state) => state.setActiveEnvironment);
-
-  const collections = useProjectStore((state) => state.collections);
-  const activeProjectPath = useProjectStore((state) => state.activeProjectPath);
-  const loadProjectEnvironments = useProjectStore((state) => state.loadEnvironments);
-  const saveProjectEnvironment = useProjectStore((state) => state.saveEnvironment);
-  const deleteProjectEnvironment = useProjectStore((state) => state.deleteEnvironment);
-  const setActiveProjectEnvironment = useProjectStore((state) => state.setActiveEnvironment);
+  const environments = useGlobalEnvironmentStore((state) => state.environments);
+  const activeEnvironmentId = useGlobalEnvironmentStore((state) => state.activeEnvironmentId);
+  const isLoaded = useGlobalEnvironmentStore((state) => state.isLoaded);
+  const loadEnvironments = useGlobalEnvironmentStore((state) => state.loadEnvironments);
+  const saveEnvironment = useGlobalEnvironmentStore((state) => state.saveEnvironment);
+  const deleteEnvironment = useGlobalEnvironmentStore((state) => state.deleteEnvironment);
+  const setActiveEnvironment = useGlobalEnvironmentStore((state) => state.setActiveEnvironment);
 
   const [search, setSearch] = useState('');
-  const [selectedRef, setSelectedRef] = useState<SelectedEnvRef | null>(null);
-  const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
+  const [selectedEnvironmentId, setSelectedEnvironmentId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [localVars, setLocalVars] = useState<Array<VarRow>>([]);
   const [isCreatePanelVisible, setIsCreatePanelVisible] = useState(false);
-  const [createScope, setCreateScope] = useState<EnvScope>('global');
   const [createName, setCreateName] = useState('');
-  const [createProjectPath, setCreateProjectPath] = useState<string | null>(null);
   const [nameModalState, setNameModalState] = useState<NameModalState | null>(null);
   const [pendingUnsavedAction, setPendingUnsavedAction] = useState<(() => Promise<void> | void) | null>(null);
   const [isUnsavedGuardVisible, setIsUnsavedGuardVisible] = useState(false);
@@ -269,217 +185,58 @@ const EnvironmentsViewer: React.FC = () => {
     handleResizeMouseDown,
   } = useHorizontalPaneResize({ initialWidth: 360, minWidth: 280, maxWidth: 520, minSecondaryWidth: 520 });
 
-  const projectPaths = useMemo(() => Object.keys(collections), [collections]);
-  const previousProjectPathsRef = useRef<string[]>([]);
-
   useEffect(() => {
-    if (!isGlobalLoaded) {
-      void loadGlobalEnvironments();
+    if (!isLoaded) {
+      void loadEnvironments();
     }
-  }, [isGlobalLoaded, loadGlobalEnvironments]);
-
-  useEffect(() => {
-    const previousProjectPaths = new Set(previousProjectPathsRef.current);
-    const nextProjectPaths = projectPaths.filter((path) => !previousProjectPaths.has(path));
-    previousProjectPathsRef.current = projectPaths;
-
-    if (nextProjectPaths.length === 0) {
-      return;
-    }
-
-    void Promise.all(nextProjectPaths.map((path) => loadProjectEnvironments(path)));
-  }, [loadProjectEnvironments, projectPaths]);
-
-  useEffect(() => {
-    if (createScope !== 'project') {
-      return;
-    }
-
-    if (createProjectPath && collections[createProjectPath]) {
-      return;
-    }
-
-    setCreateProjectPath(activeProjectPath ?? projectPaths[0] ?? null);
-  }, [activeProjectPath, collections, createProjectPath, createScope, projectPaths]);
+  }, [isLoaded, loadEnvironments]);
 
   const searchQuery = search.trim().toLowerCase();
 
-  const globalRows = useMemo<EnvRow[]>(() => {
-    return globalEnvironments
-      .filter((environment) => (searchQuery ? environment.name.toLowerCase().includes(searchQuery) : true))
-      .map((environment) => ({
-        id: environment.id,
-        name: environment.name,
-        scope: 'global',
-        isActive: environment.id === activeGlobalEnvironmentId,
-        selectionKey: getSelectionKey('global', environment.id),
-      }));
-  }, [activeGlobalEnvironmentId, globalEnvironments, searchQuery]);
+  const visibleEnvironments = useMemo(
+    () => environments.filter((environment) => (searchQuery ? environment.name.toLowerCase().includes(searchQuery) : true)),
+    [environments, searchQuery],
+  );
 
-  const projectGroups = useMemo<ProjectGroup[]>(() => {
-    return projectPaths
-      .map((projectPath) => {
-        const entry = collections[projectPath];
-        const projectName = entry?.project.name || formatProjectPathLabel(projectPath);
-        const projectLabel = formatProjectPathLabel(projectPath);
-        const collectionSearchText = `${projectName} ${projectLabel}`.toLowerCase();
-        const matchesCollection = searchQuery ? collectionSearchText.includes(searchQuery) : false;
-        const rows = (entry?.environments ?? [])
-          .filter((environment) => !searchQuery || matchesCollection || environment.name.toLowerCase().includes(searchQuery))
-          .map((environment) => ({
-            id: environment.id,
-            name: environment.name,
-            scope: 'project' as const,
-            isActive: environment.id === entry?.activeEnvironment,
-            selectionKey: getSelectionKey('project', environment.id, projectPath),
-            projectPath,
-          }));
+  const selectedEnvironment = useMemo(
+    () => environments.find((environment) => environment.id === selectedEnvironmentId) ?? null,
+    [environments, selectedEnvironmentId],
+  );
 
-        return {
-          projectPath,
-          projectName,
-          projectLabel,
-          rows,
-        };
-      })
-      .filter((group) => group.rows.length > 0 || !searchQuery);
-  }, [collections, projectPaths, searchQuery]);
-
-  const allRefsByKey = useMemo(() => {
-    const refs = new Map<string, SelectedEnvRef>();
-
-    globalEnvironments.forEach((environment) => {
-      refs.set(getSelectionKey('global', environment.id), { scope: 'global', id: environment.id });
-    });
-
-    projectPaths.forEach((projectPath) => {
-      const entry = collections[projectPath];
-      entry?.environments.forEach((environment) => {
-        refs.set(getSelectionKey('project', environment.id, projectPath), {
-          scope: 'project',
-          id: environment.id,
-          projectPath,
-        });
-      });
-    });
-
-    return refs;
-  }, [collections, globalEnvironments, projectPaths]);
-
-  const selectedEnv = useMemo<Environment | null>(() => {
-    if (!selectedRef) {
-      return null;
-    }
-
-    if (selectedRef.scope === 'global') {
-      return globalEnvironments.find((environment) => environment.id === selectedRef.id) ?? null;
-    }
-
-    if (!selectedRef.projectPath) {
-      return null;
-    }
-
-    return collections[selectedRef.projectPath]?.environments.find((environment) => environment.id === selectedRef.id) ?? null;
-  }, [collections, globalEnvironments, selectedRef]);
-
-  const selectedProjectEntry = selectedRef?.scope === 'project' && selectedRef.projectPath
-    ? collections[selectedRef.projectPath]
-    : undefined;
   const draftVariables = useMemo(() => buildVariables(localVars), [localVars]);
-  const hasUnsavedChanges = selectedEnv ? !sameVariables(draftVariables, selectedEnv.variables) : false;
+  const hasUnsavedChanges = selectedEnvironment ? !sameVariables(draftVariables, selectedEnvironment.variables) : false;
+  const visibleIds = useMemo(() => visibleEnvironments.map((environment) => environment.id), [visibleEnvironments]);
+  const selectedBatchIds = useMemo(
+    () => visibleIds.filter((environmentId) => selectedIds.has(environmentId)),
+    [selectedIds, visibleIds],
+  );
+  const allVisibleSelected = visibleIds.length > 0 && visibleIds.every((environmentId) => selectedIds.has(environmentId));
 
   useEffect(() => {
-    if (selectedRef && selectedEnv) {
+    if (selectedEnvironment) {
       return;
     }
 
-    const preferredProjectPath = selectedRef?.projectPath ?? activeProjectPath ?? projectPaths[0] ?? null;
-    const nextSelection = selectedRef?.scope === 'project'
-      ? buildProjectFallback(collections, preferredProjectPath) ?? buildGlobalFallback(activeGlobalEnvironmentId, globalEnvironments)
-      : buildGlobalFallback(activeGlobalEnvironmentId, globalEnvironments) ?? buildProjectFallback(collections, preferredProjectPath);
-
-    if (!isSameSelection(selectedRef, nextSelection)) {
-      setSelectedRef(nextSelection);
+    const nextSelectedEnvironmentId = buildGlobalFallback(activeEnvironmentId, environments);
+    if (selectedEnvironmentId !== nextSelectedEnvironmentId) {
+      setSelectedEnvironmentId(nextSelectedEnvironmentId);
     }
-  }, [activeGlobalEnvironmentId, activeProjectPath, collections, globalEnvironments, projectPaths, selectedEnv, selectedRef]);
+  }, [activeEnvironmentId, environments, selectedEnvironment, selectedEnvironmentId]);
 
   useEffect(() => {
-    const nextLocalVars = buildVarRows(selectedEnv);
+    const nextLocalVars = buildVarRows(selectedEnvironment);
     setLocalVars((current) => (sameVarRows(current, nextLocalVars) ? current : nextLocalVars));
-  }, [selectedEnv]);
+  }, [selectedEnvironment]);
 
   useEffect(() => {
-    setSelectedKeys((current) => {
-      const next = new Set(Array.from(current).filter((key) => allRefsByKey.has(key)));
+    setSelectedIds((current) => {
+      const next = new Set(Array.from(current).filter((environmentId) => environments.some((environment) => environment.id === environmentId)));
       if (next.size === current.size) {
         return current;
       }
       return next;
     });
-  }, [allRefsByKey]);
-
-  const visibleSelectionKeys = useMemo(
-    () => [
-      ...globalRows.map((row) => row.selectionKey),
-      ...projectGroups.flatMap((group) => group.rows.map((row) => row.selectionKey)),
-    ],
-    [globalRows, projectGroups],
-  );
-
-  const selectedBatchRefs = useMemo(
-    () => Array.from(selectedKeys).map((key) => allRefsByKey.get(key)).filter((value): value is SelectedEnvRef => Boolean(value)),
-    [allRefsByKey, selectedKeys],
-  );
-
-  const allVisibleSelected = visibleSelectionKeys.length > 0 && visibleSelectionKeys.every((key) => selectedKeys.has(key));
-
-  const handleToggleRowSelection = (selectionKey: string) => {
-    setSelectedKeys((current) => {
-      const next = new Set(current);
-      if (next.has(selectionKey)) {
-        next.delete(selectionKey);
-      } else {
-        next.add(selectionKey);
-      }
-      return next;
-    });
-  };
-
-  const handleToggleSelectAll = () => {
-    setSelectedKeys((current) => {
-      const next = new Set(current);
-      if (allVisibleSelected) {
-        visibleSelectionKeys.forEach((key) => next.delete(key));
-      } else {
-        visibleSelectionKeys.forEach((key) => next.add(key));
-      }
-      return next;
-    });
-  };
-
-  const getEnvironmentByRef = (ref: SelectedEnvRef): Environment | null => {
-    if (ref.scope === 'global') {
-      return globalEnvironments.find((environment) => environment.id === ref.id) ?? null;
-    }
-
-    if (!ref.projectPath) {
-      return null;
-    }
-
-    return collections[ref.projectPath]?.environments.find((environment) => environment.id === ref.id) ?? null;
-  };
-
-  const getEnvironmentListByRef = (ref: SelectedEnvRef): Environment[] => {
-    if (ref.scope === 'global') {
-      return globalEnvironments;
-    }
-
-    if (!ref.projectPath) {
-      return [];
-    }
-
-    return collections[ref.projectPath]?.environments ?? [];
-  };
+  }, [environments]);
 
   const closeUnsavedGuard = () => {
     setIsUnsavedGuardVisible(false);
@@ -496,39 +253,49 @@ const EnvironmentsViewer: React.FC = () => {
     setIsUnsavedGuardVisible(true);
   };
 
-  const executeSelect = async (ref: SelectedEnvRef) => {
-    setSelectedRef(ref);
+  const executeSelect = async (environmentId: string) => {
+    setSelectedEnvironmentId(environmentId);
 
-    if (ref.scope === 'global') {
-      if (ref.id !== activeGlobalEnvironmentId) {
-        await setActiveGlobalEnvironment(ref.id);
-      }
-      return;
-    }
-
-    if (!ref.projectPath) {
-      return;
-    }
-
-    const currentActiveEnvironmentId = collections[ref.projectPath]?.activeEnvironment ?? null;
-    if (ref.id !== currentActiveEnvironmentId) {
-      await setActiveProjectEnvironment(ref.projectPath, ref.id);
+    if (environmentId !== activeEnvironmentId) {
+      await setActiveEnvironment(environmentId);
     }
   };
 
-  const handleSelect = (ref: SelectedEnvRef) => {
-    if (isSameSelection(selectedRef, ref)) {
-      void executeSelect(ref);
+  const handleSelect = (environmentId: string) => {
+    if (environmentId === selectedEnvironmentId) {
+      void executeSelect(environmentId);
       return;
     }
 
-    runWithUnsavedGuard(() => executeSelect(ref));
+    runWithUnsavedGuard(() => executeSelect(environmentId));
+  };
+
+  const handleToggleRowSelection = (environmentId: string) => {
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      if (next.has(environmentId)) {
+        next.delete(environmentId);
+      } else {
+        next.add(environmentId);
+      }
+      return next;
+    });
+  };
+
+  const handleToggleSelectAll = () => {
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      if (allVisibleSelected) {
+        visibleIds.forEach((environmentId) => next.delete(environmentId));
+      } else {
+        visibleIds.forEach((environmentId) => next.add(environmentId));
+      }
+      return next;
+    });
   };
 
   const resetCreateForm = () => {
     setCreateName('');
-    setCreateProjectPath(activeProjectPath ?? projectPaths[0] ?? null);
-    setCreateScope('global');
     setIsCreatePanelVisible(false);
   };
 
@@ -539,29 +306,17 @@ const EnvironmentsViewer: React.FC = () => {
       return;
     }
 
-    if (createScope === 'project' && !createProjectPath) {
-      message.warning(t('environment.selectCollectionFirst'));
-      return;
-    }
-
-    const env: Environment = {
+    const environment: Environment = {
       id: createEnvironmentId(name),
       name,
       variables: {},
     };
 
     try {
-      if (createScope === 'global') {
-        await saveGlobalEnvironment(env);
-        await setActiveGlobalEnvironment(env.id);
-        setSelectedRef({ scope: 'global', id: env.id });
-      } else if (createProjectPath) {
-        await saveProjectEnvironment(createProjectPath, env);
-        await setActiveProjectEnvironment(createProjectPath, env.id);
-        setSelectedRef({ scope: 'project', id: env.id, projectPath: createProjectPath });
-      }
-
-      setSelectedKeys(new Set());
+      await saveEnvironment(environment);
+      await setActiveEnvironment(environment.id);
+      setSelectedEnvironmentId(environment.id);
+      setSelectedIds(new Set());
       resetCreateForm();
       message.success(t('environment.saved'));
     } catch {
@@ -570,19 +325,19 @@ const EnvironmentsViewer: React.FC = () => {
   };
 
   const handleAddVariable = () => {
-    setLocalVars((prev) => [...prev, { id: String(Date.now()), key: '', value: '' }]);
+    setLocalVars((current) => [...current, { id: String(Date.now()), key: '', value: '' }]);
   };
 
   const handleVarChange = (id: string, field: 'key' | 'value', value: string) => {
-    setLocalVars((prev) => prev.map((row) => (row.id === id ? { ...row, [field]: value } : row)));
+    setLocalVars((current) => current.map((row) => (row.id === id ? { ...row, [field]: value } : row)));
   };
 
   const handleVarRemove = (id: string) => {
-    setLocalVars((prev) => prev.filter((row) => row.id !== id));
+    setLocalVars((current) => current.filter((row) => row.id !== id));
   };
 
   const handleSaveSelected = async (): Promise<boolean> => {
-    if (!selectedRef || !selectedEnv) {
+    if (!selectedEnvironment) {
       return true;
     }
 
@@ -591,11 +346,7 @@ const EnvironmentsViewer: React.FC = () => {
     }
 
     try {
-      if (selectedRef.scope === 'global') {
-        await saveGlobalEnvironment({ ...selectedEnv, variables: draftVariables });
-      } else if (selectedRef.projectPath) {
-        await saveProjectEnvironment(selectedRef.projectPath, { ...selectedEnv, variables: draftVariables });
-      }
+      await saveEnvironment({ ...selectedEnvironment, variables: draftVariables });
       message.success(t('environment.saved'));
       return true;
     } catch {
@@ -616,49 +367,43 @@ const EnvironmentsViewer: React.FC = () => {
       if (!saved) {
         return;
       }
-    } else if (selectedEnv) {
-      setLocalVars(buildVarRows(selectedEnv));
+    } else if (selectedEnvironment) {
+      setLocalVars(buildVarRows(selectedEnvironment));
     }
 
     closeUnsavedGuard();
     await action();
   };
 
-  const deleteEnvironmentRefs = async (refs: SelectedEnvRef[]) => {
-    for (const ref of refs) {
-      if (ref.scope === 'global') {
-        await deleteGlobalEnvironment(ref.id);
-        continue;
-      }
-
-      if (ref.projectPath) {
-        await deleteProjectEnvironment(ref.projectPath, ref.id);
-      }
+  const deleteEnvironmentIds = async (environmentIds: string[]) => {
+    for (const environmentId of environmentIds) {
+      await deleteEnvironment(environmentId);
     }
 
-    const deletedKeys = new Set(refs.map((ref) => getSelectionKey(ref.scope, ref.id, ref.projectPath)));
-    setSelectedKeys((current) => new Set(Array.from(current).filter((key) => !deletedKeys.has(key))));
+    setSelectedIds((current) => new Set(Array.from(current).filter((environmentId) => !environmentIds.includes(environmentId))));
 
-    if (selectedRef && deletedKeys.has(getSelectionKey(selectedRef.scope, selectedRef.id, selectedRef.projectPath))) {
-      setSelectedRef(null);
+    if (selectedEnvironmentId && environmentIds.includes(selectedEnvironmentId)) {
+      setSelectedEnvironmentId(null);
     }
   };
 
-  const confirmDelete = (refs: SelectedEnvRef[]) => {
-    const count = refs.length;
-    const targetEnv = count === 1 ? getEnvironmentByRef(refs[0]) : null;
+  const confirmDelete = (environmentIds: string[]) => {
+    const count = environmentIds.length;
+    const targetEnvironment = count === 1
+      ? environments.find((environment) => environment.id === environmentIds[0]) ?? null
+      : null;
 
     Modal.confirm({
       title: t('environment.deleteConfirm'),
       content: count === 1
-        ? t('environment.deleteMessage', { name: targetEnv?.name ?? '-' })
+        ? t('environment.deleteMessage', { name: targetEnvironment?.name ?? '-' })
         : t('environment.batchDeleteMessage', { count }),
       okText: t('environment.delete'),
       cancelText: t('environment.cancel'),
       okButtonProps: { danger: true },
       onOk: async () => {
         try {
-          await deleteEnvironmentRefs(refs);
+          await deleteEnvironmentIds(environmentIds);
           message.success(count === 1 ? t('environment.deleted') : t('environment.batchDeleted', { count }));
         } catch {
           message.error(t('environment.failedDelete'));
@@ -668,40 +413,40 @@ const EnvironmentsViewer: React.FC = () => {
   };
 
   const handleDeleteSelected = () => {
-    if (!selectedRef || !selectedEnv) {
+    if (!selectedEnvironment) {
       return;
     }
 
     runWithUnsavedGuard(() => {
-      confirmDelete([selectedRef]);
+      confirmDelete([selectedEnvironment.id]);
     });
   };
 
   const handleBatchDelete = () => {
-    if (selectedBatchRefs.length === 0) {
+    if (selectedBatchIds.length === 0) {
       return;
     }
 
     runWithUnsavedGuard(() => {
-      confirmDelete(selectedBatchRefs);
+      confirmDelete(selectedBatchIds);
     });
   };
 
-  const openRenameModal = (ref: SelectedEnvRef) => {
-    const environment = getEnvironmentByRef(ref);
+  const openRenameModal = (environmentId: string) => {
+    const environment = environments.find((item) => item.id === environmentId);
     if (!environment) {
       return;
     }
 
     setNameModalState({
-      ref,
+      id: environmentId,
       value: environment.name,
     });
   };
 
-  const handleRenameRef = (ref: SelectedEnvRef) => {
+  const handleRename = (environmentId: string) => {
     runWithUnsavedGuard(() => {
-      openRenameModal(ref);
+      openRenameModal(environmentId);
     });
   };
 
@@ -716,7 +461,7 @@ const EnvironmentsViewer: React.FC = () => {
       return;
     }
 
-    const environment = getEnvironmentByRef(nameModalState.ref);
+    const environment = environments.find((item) => item.id === nameModalState.id);
     if (!environment) {
       setNameModalState(null);
       return;
@@ -728,12 +473,7 @@ const EnvironmentsViewer: React.FC = () => {
     }
 
     try {
-      if (nameModalState.ref.scope === 'global') {
-        await saveGlobalEnvironment({ ...environment, name });
-      } else if (nameModalState.ref.projectPath) {
-        await saveProjectEnvironment(nameModalState.ref.projectPath, { ...environment, name });
-      }
-
+      await saveEnvironment({ ...environment, name });
       setNameModalState(null);
       message.success(t('environment.saved'));
     } catch {
@@ -741,36 +481,29 @@ const EnvironmentsViewer: React.FC = () => {
     }
   };
 
-  const handleDuplicateRef = (ref: SelectedEnvRef) => {
+  const handleDuplicate = (environmentId: string) => {
     runWithUnsavedGuard(async () => {
-      const environment = getEnvironmentByRef(ref);
+      const environment = environments.find((item) => item.id === environmentId);
       if (!environment) {
         return;
       }
 
       const name = buildDuplicateEnvironmentName(
         environment.name,
-        getEnvironmentListByRef(ref),
+        environments,
         t('environment.duplicateCopySuffix'),
       );
-      const duplicateEnvironment: Environment = {
+      const duplicatedEnvironment: Environment = {
         id: createEnvironmentId(name),
         name,
         variables: { ...environment.variables },
       };
 
       try {
-        if (ref.scope === 'global') {
-          await saveGlobalEnvironment(duplicateEnvironment);
-          await setActiveGlobalEnvironment(duplicateEnvironment.id);
-          setSelectedRef({ scope: 'global', id: duplicateEnvironment.id });
-        } else if (ref.projectPath) {
-          await saveProjectEnvironment(ref.projectPath, duplicateEnvironment);
-          await setActiveProjectEnvironment(ref.projectPath, duplicateEnvironment.id);
-          setSelectedRef({ scope: 'project', id: duplicateEnvironment.id, projectPath: ref.projectPath });
-        }
-
-        setSelectedKeys(new Set());
+        await saveEnvironment(duplicatedEnvironment);
+        await setActiveEnvironment(duplicatedEnvironment.id);
+        setSelectedEnvironmentId(duplicatedEnvironment.id);
+        setSelectedIds(new Set());
         message.success(t('environment.saved'));
       } catch {
         message.error(t('environment.failedSave'));
@@ -778,14 +511,11 @@ const EnvironmentsViewer: React.FC = () => {
     });
   };
 
-  const handleDeleteRef = (ref: SelectedEnvRef) => {
+  const handleDelete = (environmentId: string) => {
     runWithUnsavedGuard(() => {
-      confirmDelete([ref]);
+      confirmDelete([environmentId]);
     });
   };
-
-  const detailChipText = buildDetailChipText(t, selectedEnv, selectedRef);
-  const detailMetaText = buildDetailMetaText(t, selectedRef, selectedProjectEntry);
 
   return (
     <div className="env-viewer" ref={containerRef}>
@@ -793,7 +523,7 @@ const EnvironmentsViewer: React.FC = () => {
         <div className="env-title-row">
           <div className="env-title">{t('navRail.environments')}</div>
           <div className="env-title-chip">
-            {selectedKeys.size > 0 ? t('environment.selectedCount', { count: selectedKeys.size }) : t('environment.customGroup')}
+            {selectedIds.size > 0 ? t('environment.selectedCount', { count: selectedIds.size }) : t('environment.customGroup')}
           </div>
         </div>
 
@@ -813,17 +543,14 @@ const EnvironmentsViewer: React.FC = () => {
           <button
             type="button"
             className="env-chip active"
-            onClick={() => {
-              setIsCreatePanelVisible((value) => !value);
-              setCreateProjectPath(activeProjectPath ?? projectPaths[0] ?? null);
-            }}
+            onClick={() => setIsCreatePanelVisible((current) => !current)}
           >
             {t('environment.new')}
           </button>
           <button
             type="button"
             className="env-chip"
-            disabled={visibleSelectionKeys.length === 0}
+            disabled={visibleIds.length === 0}
             onClick={handleToggleSelectAll}
           >
             {allVisibleSelected ? t('environment.clearSelection') : t('environment.selectAll')}
@@ -831,10 +558,10 @@ const EnvironmentsViewer: React.FC = () => {
           <button
             type="button"
             className="env-chip"
-            disabled={selectedBatchRefs.length === 0}
+            disabled={selectedBatchIds.length === 0}
             onClick={handleBatchDelete}
           >
-            {t('environment.deleteSelected', { count: selectedBatchRefs.length })}
+            {t('environment.deleteSelected', { count: selectedBatchIds.length })}
           </button>
         </div>
 
@@ -850,51 +577,6 @@ const EnvironmentsViewer: React.FC = () => {
               />
             </div>
 
-            <div className="env-field">
-              <div className="env-field-label">{t('environment.typeLabel')}</div>
-              <div className="env-scope-switch">
-                <button
-                  type="button"
-                  className={`env-chip ${createScope === 'global' ? 'active' : ''}`}
-                  onClick={() => setCreateScope('global')}
-                >
-                  {t('environment.customGroup')}
-                </button>
-                <button
-                  type="button"
-                  className={`env-chip ${createScope === 'project' ? 'active' : ''}`}
-                  onClick={() => setCreateScope('project')}
-                >
-                  {t('environment.projectGroup')}
-                </button>
-              </div>
-            </div>
-
-            {createScope === 'project' && (
-              <div className="env-field">
-                <div className="env-field-label">{t('environment.collectionLabel')}</div>
-                {projectPaths.length > 0 ? (
-                  <select
-                    className="env-field-select"
-                    value={createProjectPath ?? ''}
-                    onChange={(event) => setCreateProjectPath(event.target.value || null)}
-                  >
-                    {projectPaths.map((projectPath) => {
-                      const entry = collections[projectPath];
-                      const projectName = entry?.project.name || formatProjectPathLabel(projectPath);
-                      return (
-                        <option key={projectPath} value={projectPath}>
-                          {projectName} · {formatProjectPathLabel(projectPath)}
-                        </option>
-                      );
-                    })}
-                  </select>
-                ) : (
-                  <div className="env-empty-hint">{t('environment.noCollectionAvailable')}</div>
-                )}
-              </div>
-            )}
-
             <div className="env-actions">
               <button type="button" className="env-chip active" onClick={handleCreate}>
                 {t('environment.save')}
@@ -908,67 +590,25 @@ const EnvironmentsViewer: React.FC = () => {
 
         <div className="env-list-rows">
           <div className="env-list-group">{t('environment.customGroup')}</div>
-          {globalRows.length === 0 ? (
+          {visibleEnvironments.length === 0 ? (
             <button type="button" className="env-row disabled" disabled>
               <div className="env-row-name">-</div>
             </button>
           ) : (
-            globalRows.map((row) => {
-              const rowRef: SelectedEnvRef = { scope: 'global', id: row.id };
-              return (
-                <EnvironmentRow
-                  key={`g:${row.id}`}
-                  row={row}
-                  isChecked={selectedKeys.has(row.selectionKey)}
-                  isSelected={isSameSelection(selectedRef, rowRef)}
-                  onSelect={() => handleSelect(rowRef)}
-                  onToggleSelection={() => handleToggleRowSelection(row.selectionKey)}
-                  onRename={() => handleRenameRef(rowRef)}
-                  onDuplicate={() => handleDuplicateRef(rowRef)}
-                  onDelete={() => handleDeleteRef(rowRef)}
-                  t={t}
-                />
-              );
-            })
-          )}
-
-          <div className="env-list-group">{t('environment.projectGroup')}</div>
-          {projectGroups.length === 0 ? (
-            <button type="button" className="env-row disabled" disabled>
-              <div className="env-row-name">{t('environment.noCollectionAvailable')}</div>
-            </button>
-          ) : (
-            projectGroups.map((group) => (
-              <div key={group.projectPath} className="env-project-group">
-                <div className="env-project-group-head">
-                  <div className="env-project-group-title">{group.projectName}</div>
-                  <div className="env-project-group-path">{group.projectLabel}</div>
-                </div>
-
-                {group.rows.length === 0 ? (
-                  <button type="button" className="env-row disabled" disabled>
-                    <div className="env-row-name">-</div>
-                  </button>
-                ) : (
-                  group.rows.map((row) => {
-                    const rowRef: SelectedEnvRef = { scope: 'project', id: row.id, projectPath: row.projectPath };
-                    return (
-                      <EnvironmentRow
-                        key={`p:${group.projectPath}:${row.id}`}
-                        row={row}
-                        isChecked={selectedKeys.has(row.selectionKey)}
-                        isSelected={isSameSelection(selectedRef, rowRef)}
-                        onSelect={() => handleSelect(rowRef)}
-                        onToggleSelection={() => handleToggleRowSelection(row.selectionKey)}
-                        onRename={() => handleRenameRef(rowRef)}
-                        onDuplicate={() => handleDuplicateRef(rowRef)}
-                        onDelete={() => handleDeleteRef(rowRef)}
-                        t={t}
-                      />
-                    );
-                  })
-                )}
-              </div>
+            visibleEnvironments.map((environment) => (
+              <EnvironmentRow
+                key={environment.id}
+                environment={environment}
+                isChecked={selectedIds.has(environment.id)}
+                isSelected={selectedEnvironmentId === environment.id}
+                isActive={activeEnvironmentId === environment.id}
+                onSelect={() => handleSelect(environment.id)}
+                onToggleSelection={() => handleToggleRowSelection(environment.id)}
+                onRename={() => handleRename(environment.id)}
+                onDuplicate={() => handleDuplicate(environment.id)}
+                onDelete={() => handleDelete(environment.id)}
+                t={t}
+              />
             ))
           )}
         </div>
@@ -986,13 +626,13 @@ const EnvironmentsViewer: React.FC = () => {
         <div className="env-detail-head">
           <div className="env-detail-title-wrap">
             <div>
-              <div className="env-detail-title">{selectedEnv?.name || '-'}</div>
-              {selectedEnv && <div className="env-detail-subtitle">{detailMetaText}</div>}
+              <div className="env-detail-title">{selectedEnvironment?.name || '-'}</div>
+              {selectedEnvironment && <div className="env-detail-subtitle">{t('environment.customGroup')}</div>}
             </div>
-            <div className="env-detail-chip">{detailChipText}</div>
+            <div className="env-detail-chip">{selectedEnvironment ? t('environment.customGroup') : t('environment.notSelected')}</div>
           </div>
 
-          {selectedEnv && (
+          {selectedEnvironment && (
             <div className="env-detail-actions">
               <button type="button" className="env-chip env-detail-action save" onClick={() => void handleSaveSelected()}>
                 {t('environment.save')}
@@ -1004,7 +644,7 @@ const EnvironmentsViewer: React.FC = () => {
           )}
         </div>
 
-        {selectedEnv ? (
+        {selectedEnvironment ? (
           <>
             <div className="env-var-table">
               <div className="env-var-head">
@@ -1099,7 +739,7 @@ const EnvironmentsViewer: React.FC = () => {
           </button>,
         ]}
       >
-        <div className="env-modal-copy">{t('environment.unsavedChangesMessage', { name: selectedEnv?.name ?? '-' })}</div>
+        <div className="env-modal-copy">{t('environment.unsavedChangesMessage', { name: selectedEnvironment?.name ?? '-' })}</div>
       </Modal>
     </div>
   );

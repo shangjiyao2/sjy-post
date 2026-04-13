@@ -10,6 +10,10 @@ export async function openProject(path: string): Promise<Project> {
   return invoke('open_project', { path });
 }
 
+export async function renameProject(path: string, name: string): Promise<Project> {
+  return invoke('rename_project', { path, name });
+}
+
 export async function readProjectTree(projectPath: string): Promise<TreeNode[]> {
   return invoke('read_project_tree', { projectPath });
 }

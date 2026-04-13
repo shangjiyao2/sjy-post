@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Tree, Button, Input, Dropdown, Modal, Select, message } from 'antd';
+import { Tree, Button, Input, Dropdown, Modal, message } from 'antd';
 import type { MenuProps, TreeProps } from 'antd';
 import {
   PlusOutlined,
@@ -13,7 +13,6 @@ import {
   DownloadOutlined,
   FolderOpenOutlined,
   CloseOutlined,
-  SettingOutlined,
   MoreOutlined,
   CopyOutlined,
 } from '@ant-design/icons';
@@ -21,8 +20,8 @@ import { open } from '@tauri-apps/plugin-dialog';
 import { useProjectStore } from '../../stores/projectStore';
 import { useRequestStore } from '../../stores/requestStore';
 import { useNavStore } from '../../stores/navStore';
-import type { Environment, TreeNode as AppTreeNode } from '../../types';
-import { buildDuplicateEnvironmentName, buildDuplicateName, createEnvironmentId, createNewRequest, getHttpMethodColor } from '../../types';
+import type { TreeNode as AppTreeNode } from '../../types';
+import { buildDuplicateName, createNewRequest, getHttpMethodColor } from '../../types';
 import * as api from '../../services/api';
 import ImportDialog from '../Import/ImportDialog';
 import { ChevronDownIcon, FolderIcon, SearchIcon } from './TreeIcons';
@@ -48,6 +47,8 @@ type RenderableTreeSelectInfo = Parameters<NonNullable<TreeProps<RenderableAntTr
 
 const EMPTY_TREE_SELECTED_KEYS: React.Key[] = [];
 const INVALID_FILE_NAME_CHARS = /[\\/:*?"<>|]/;
+const REQUEST_FILE_SUFFIX = '.req.json';
+const WEBSOCKET_FILE_SUFFIX = '.ws.json';
 
 function normalizeNodePath(nodePath: string): string {
   return nodePath.replaceAll('\\', '/');
@@ -89,15 +90,31 @@ function buildRequestTreeOverrideKey(projectPath: string, nodePath: string): str
   return `${projectPath}::${normalizeNodePath(nodePath)}`;
 }
 
-type EnvironmentRenameState = {
-  projectPath: string;
-  envId: string;
-  value: string;
-};
+function getRenamedNodePath(nodePath: string, newName: string): string {
+  const normalizedPath = normalizeNodePath(nodePath);
+  const lastSlashIndex = normalizedPath.lastIndexOf('/');
+  const parentPath = lastSlashIndex >= 0 ? normalizedPath.slice(0, lastSlashIndex + 1) : '';
+  const currentName = lastSlashIndex >= 0 ? normalizedPath.slice(lastSlashIndex + 1) : normalizedPath;
+
+  if (currentName.endsWith(REQUEST_FILE_SUFFIX)) {
+    return `${parentPath}${newName}${REQUEST_FILE_SUFFIX}`;
+  }
+
+  if (currentName.endsWith(WEBSOCKET_FILE_SUFFIX)) {
+    return `${parentPath}${newName}${WEBSOCKET_FILE_SUFFIX}`;
+  }
+
+  return `${parentPath}${newName}`;
+}
 
 interface SidebarProps {
   activeNavItem: NavRailItem;
 }
+
+type CollectionRenameState = {
+  projectPath: string;
+  value: string;
+};
 
 const Sidebar: React.FC<SidebarProps> = ({ activeNavItem }) => {
   const [width, setWidth] = useState(360);
@@ -115,8 +132,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeNavItem }) => {
   const [renameOriginalName, setRenameOriginalName] = useState('');
   const [renameNodeProjectPath, setRenameNodeProjectPath] = useState('');
   const [importDialogVisible, setImportDialogVisible] = useState(false);
-  const [environmentRenameState, setEnvironmentRenameState] = useState<EnvironmentRenameState | null>(null);
-
+  const [collectionRenameState, setCollectionRenameState] = useState<CollectionRenameState | null>(null);
   const { t } = useTranslation();
   const {
     collections,
@@ -129,14 +145,13 @@ const Sidebar: React.FC<SidebarProps> = ({ activeNavItem }) => {
     refreshTree,
     closeCollection,
     setActiveProject,
-    setActiveEnvironment,
-    saveEnvironment,
-    deleteEnvironment,
+    renameProject,
     toggleCollapse,
     isLoading,
   } = useProjectStore();
   const openRequest = useRequestStore((s) => s.openRequest);
   const openNewTab = useRequestStore((s) => s.openNewTab);
+  const syncTabsAfterNodeRename = useRequestStore((s) => s.syncTabsAfterNodeRename);
   const activeRequestTab = useRequestStore((s) => s.getActiveTab());
   const requestTabs = useRequestStore((s) => s.tabs);
   const setActiveNavItem = useNavStore((s) => s.setActiveNavItem);
@@ -354,7 +369,9 @@ const Sidebar: React.FC<SidebarProps> = ({ activeNavItem }) => {
     }
 
     try {
+      const nextNodePath = getRenamedNodePath(renameNodePath, trimmedName);
       await renameNode(renameNodeProjectPath, renameNodePath, trimmedName);
+      syncTabsAfterNodeRename(renameNodeProjectPath, renameNodePath, nextNodePath);
       message.success(t('sidebar.renamedSuccess'));
       resetRenameState();
     } catch (e) {
@@ -542,6 +559,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeNavItem }) => {
     { key: 'new-request', label: t('sidebar.newRequest'), icon: <FileAddOutlined /> },
     { key: 'new-folder', label: t('sidebar.newFolder'), icon: <FolderAddOutlined /> },
     { type: 'divider' },
+    { key: 'rename-collection', label: t('sidebar.renameCollection'), icon: <EditOutlined /> },
     { key: 'close-collection', label: t('sidebar.closeCollection'), icon: <CloseOutlined /> },
   ];
 
@@ -559,10 +577,57 @@ const Sidebar: React.FC<SidebarProps> = ({ activeNavItem }) => {
         setNewFolderModalVisible(true);
         break;
       }
+      case 'rename-collection': {
+        const entry = collections[projectPath];
+        if (!entry) {
+          return;
+        }
+
+        setCollectionRenameState({
+          projectPath,
+          value: entry.project.name,
+        });
+        break;
+      }
       case 'close-collection': {
         closeCollection(projectPath);
         break;
       }
+    }
+  };
+
+  const closeCollectionRenameModal = () => {
+    setCollectionRenameState(null);
+  };
+
+  const handleRenameCollection = async () => {
+    if (!collectionRenameState) {
+      return;
+    }
+
+    const name = collectionRenameState.value.trim();
+    if (!name) {
+      message.warning(t('sidebar.enterProjectName'));
+      return;
+    }
+
+    const entry = collections[collectionRenameState.projectPath];
+    if (!entry) {
+      closeCollectionRenameModal();
+      return;
+    }
+
+    if (name === entry.project.name) {
+      closeCollectionRenameModal();
+      return;
+    }
+
+    try {
+      await renameProject(collectionRenameState.projectPath, name);
+      message.success(t('sidebar.collectionRenamed'));
+      closeCollectionRenameModal();
+    } catch (e) {
+      message.error(t('sidebar.failedRenameCollection', { error: e }));
     }
   };
 
@@ -629,140 +694,6 @@ const Sidebar: React.FC<SidebarProps> = ({ activeNavItem }) => {
     .filter(({ treeNodes }) => !normalizedSearchValue || treeNodes.length > 0);
 
   const currentCollectionPath = activeProjectPath ?? Object.keys(collections)[0] ?? null;
-  const currentCollection = currentCollectionPath ? collections[currentCollectionPath] : undefined;
-  const currentEnvironmentOptions = (currentCollection?.environments ?? []).map((env) => ({
-    label: env.name,
-    value: env.id,
-  }));
-  const activeProjectEnvironment = currentCollection?.activeEnvironment
-    ? currentCollection.environments.find((environment) => environment.id === currentCollection.activeEnvironment) ?? null
-    : null;
-  const isEnvironmentActionDisabled = !currentCollectionPath || !activeProjectEnvironment;
-
-  const closeEnvironmentRenameModal = () => {
-    setEnvironmentRenameState(null);
-  };
-
-  const openEnvironmentRenameModal = () => {
-    if (!currentCollectionPath || !activeProjectEnvironment) {
-      return;
-    }
-
-    setEnvironmentRenameState({
-      projectPath: currentCollectionPath,
-      envId: activeProjectEnvironment.id,
-      value: activeProjectEnvironment.name,
-    });
-  };
-
-  const handleConfirmEnvironmentRename = async () => {
-    if (!environmentRenameState) {
-      return;
-    }
-
-    const name = environmentRenameState.value.trim();
-    if (!name) {
-      message.warning(t('environment.enterName'));
-      return;
-    }
-
-    const collectionEntry = collections[environmentRenameState.projectPath];
-    const environment = collectionEntry?.environments.find((item) => item.id === environmentRenameState.envId);
-    if (!environment) {
-      closeEnvironmentRenameModal();
-      return;
-    }
-
-    if (name === environment.name) {
-      closeEnvironmentRenameModal();
-      return;
-    }
-
-    try {
-      setActiveProject(environmentRenameState.projectPath);
-      await saveEnvironment(environmentRenameState.projectPath, { ...environment, name });
-      closeEnvironmentRenameModal();
-      message.success(t('environment.saved'));
-    } catch {
-      message.error(t('environment.failedSave'));
-    }
-  };
-
-  const handleDuplicateActiveEnvironment = async () => {
-    if (!currentCollectionPath || !activeProjectEnvironment) {
-      return;
-    }
-
-    const name = buildDuplicateEnvironmentName(
-      activeProjectEnvironment.name,
-      currentCollection?.environments ?? [],
-      t('environment.duplicateCopySuffix'),
-    );
-    const duplicateEnvironment: Environment = {
-      id: createEnvironmentId(name),
-      name,
-      variables: { ...activeProjectEnvironment.variables },
-    };
-
-    try {
-      setActiveProject(currentCollectionPath);
-      await saveEnvironment(currentCollectionPath, duplicateEnvironment);
-      await setActiveEnvironment(currentCollectionPath, duplicateEnvironment.id);
-      message.success(t('environment.saved'));
-    } catch {
-      message.error(t('environment.failedSave'));
-    }
-  };
-
-  const handleDeleteActiveEnvironment = () => {
-    if (!currentCollectionPath || !activeProjectEnvironment) {
-      return;
-    }
-
-    Modal.confirm({
-      title: t('environment.deleteConfirm'),
-      content: t('environment.deleteMessage', { name: activeProjectEnvironment.name }),
-      okText: t('environment.delete'),
-      okType: 'danger',
-      cancelText: t('environment.cancel'),
-      onOk: async () => {
-        try {
-          setActiveProject(currentCollectionPath);
-          await deleteEnvironment(currentCollectionPath, activeProjectEnvironment.id);
-          message.success(t('environment.deleted'));
-        } catch {
-          message.error(t('environment.failedDelete'));
-        }
-      },
-    });
-  };
-
-  const environmentActionMenu: MenuProps = {
-    items: [
-      { key: 'rename', label: t('environment.rename') },
-      { key: 'duplicate', label: t('environment.duplicate') },
-      { key: 'delete', label: t('environment.delete'), danger: true },
-    ],
-    onClick: ({ key }) => {
-      if (isEnvironmentActionDisabled) {
-        return;
-      }
-
-      switch (key) {
-        case 'rename':
-          openEnvironmentRenameModal();
-          break;
-        case 'duplicate':
-          void handleDuplicateActiveEnvironment();
-          break;
-        case 'delete':
-          handleDeleteActiveEnvironment();
-          break;
-        default:
-          break;
-      }
-    },
-  };
 
   const handleOpenEnvironmentManager = () => {
     if (currentCollectionPath) {
@@ -826,39 +757,9 @@ const Sidebar: React.FC<SidebarProps> = ({ activeNavItem }) => {
 
         <div className="env-selector-bar">
           <span className="env-selector-label">{t('navRail.environments')}</span>
-          <Select
-            value={currentCollection?.activeEnvironment || undefined}
-            placeholder={t('environment.selectEnv')}
-            options={currentEnvironmentOptions}
-            disabled={!currentCollectionPath || currentEnvironmentOptions.length === 0}
-            style={{ flex: 1 }}
-            onChange={(value) => {
-              if (!currentCollectionPath) {
-                return;
-              }
-              setActiveProject(currentCollectionPath);
-              void setActiveEnvironment(currentCollectionPath, value).catch(() => {
-                message.error(t('environment.failedActivate'));
-              });
-            }}
-          />
-          <Dropdown menu={environmentActionMenu} trigger={['click']} disabled={isEnvironmentActionDisabled}>
-            <Button
-              type="text"
-              className="env-selector-actions-trigger"
-              icon={<MoreOutlined />}
-              aria-label={t('environment.rowActions')}
-              title={t('environment.rowActions')}
-              disabled={isEnvironmentActionDisabled}
-            />
-          </Dropdown>
-          <Button
-            type="text"
-            icon={<SettingOutlined />}
-            aria-label={t('environment.manage')}
-            title={t('environment.manage')}
-            onClick={handleOpenEnvironmentManager}
-          />
+          <Button type="text" onClick={handleOpenEnvironmentManager}>
+            {t('environment.manage')}
+          </Button>
         </div>
 
         <div className="collections-list">
@@ -1054,22 +955,21 @@ const Sidebar: React.FC<SidebarProps> = ({ activeNavItem }) => {
       </Modal>
 
       <Modal
-        title={t('environment.renameTitle')}
-        open={Boolean(environmentRenameState)}
-        onOk={() => void handleConfirmEnvironmentRename()}
-        onCancel={closeEnvironmentRenameModal}
-        okText={t('environment.save')}
-        cancelText={t('environment.cancel')}
+        title={t('sidebar.renameCollectionTitle')}
+        open={Boolean(collectionRenameState)}
+        onOk={() => void handleRenameCollection()}
+        onCancel={closeCollectionRenameModal}
+        okText={t('sidebar.rename')}
+        cancelText={t('sidebar.cancel')}
       >
         <Input
-          value={environmentRenameState?.value ?? ''}
-          onChange={(event) => setEnvironmentRenameState((current) => (current ? { ...current, value: event.target.value } : current))}
-          onPressEnter={() => void handleConfirmEnvironmentRename()}
-          placeholder={t('environment.envNamePlaceholder')}
+          placeholder={t('sidebar.projectNamePlaceholder')}
+          value={collectionRenameState?.value ?? ''}
+          onChange={(e) => setCollectionRenameState((current) => (current ? { ...current, value: e.target.value } : current))}
+          onPressEnter={() => void handleRenameCollection()}
           autoFocus
         />
       </Modal>
-
       <ImportDialog
         open={importDialogVisible}
         onClose={() => setImportDialogVisible(false)}

@@ -34,24 +34,47 @@ interface RequestState {
   saveRequest: (tabId: string, projectPath: string) => Promise<void>;
   saveNewRequest: (tabId: string, projectPath: string, folderPath: string, name: string) => Promise<string>;
   renameTab: (tabId: string, newName: string) => Promise<void>;
+  syncTabsAfterNodeRename: (projectPath: string, oldNodePath: string, newNodePath: string) => void;
   getActiveTab: () => RequestTab | null;
 }
 
 const INVALID_REQUEST_NAME_PATTERN = /[\\/:*?"<>|]/;
+const REQUEST_FILE_SUFFIX = '.req.json';
 
 function buildRequestFilePath(folderPath: string, name: string): string {
   const fileName = `${name}.req.json`;
   return folderPath === '.' ? fileName : `${folderPath}/${fileName}`;
 }
 
+function normalizeNodePath(nodePath: string): string {
+  return nodePath.replaceAll('\\', '/');
+}
+
 function getRenamedRequestFilePath(filePath: string, newName: string): string {
-  const normalizedPath = filePath.replaceAll('\\', '/');
+  const normalizedPath = normalizeNodePath(filePath);
   const lastSlashIndex = normalizedPath.lastIndexOf('/');
   if (lastSlashIndex < 0) {
     return `${newName}.req.json`;
   }
 
   return `${normalizedPath.slice(0, lastSlashIndex)}/${newName}.req.json`;
+}
+
+function getUpdatedTabFilePathAfterNodeRename(filePath: string, oldNodePath: string, newNodePath: string): string {
+  const normalizedFilePath = normalizeNodePath(filePath);
+  const normalizedOldNodePath = normalizeNodePath(oldNodePath);
+  const normalizedNewNodePath = normalizeNodePath(newNodePath);
+
+  if (normalizedFilePath === normalizedOldNodePath) {
+    return normalizedNewNodePath;
+  }
+
+  const oldPrefix = `${normalizedOldNodePath}/`;
+  if (normalizedFilePath.startsWith(oldPrefix)) {
+    return `${normalizedNewNodePath}${normalizedFilePath.slice(normalizedOldNodePath.length)}`;
+  }
+
+  return normalizedFilePath;
 }
 
 function applyInMemoryRename(tab: RequestTab, newName: string): RequestTab {
@@ -335,6 +358,41 @@ export const useRequestStore = create<RequestState>((set, get) => ({
 
       throw error;
     }
+  },
+
+  syncTabsAfterNodeRename: (projectPath, oldNodePath, newNodePath) => {
+    set((state) => ({
+      tabs: state.tabs.map((tab) => {
+        if (!tab.filePath || tab.projectPath !== projectPath) {
+          return tab;
+        }
+
+        const nextFilePath = getUpdatedTabFilePathAfterNodeRename(tab.filePath, oldNodePath, newNodePath);
+        if (nextFilePath === tab.filePath) {
+          return tab;
+        }
+
+        const renamedExactRequestFile = normalizeNodePath(tab.filePath) === normalizeNodePath(oldNodePath)
+          && normalizeNodePath(oldNodePath).endsWith(REQUEST_FILE_SUFFIX);
+        if (!renamedExactRequestFile) {
+          return { ...tab, filePath: nextFilePath };
+        }
+
+        const renamedRequestName = normalizeNodePath(newNodePath)
+          .split('/')
+          .pop()
+          ?.replace(REQUEST_FILE_SUFFIX, '')
+          ?? tab.request.name;
+
+        return {
+          ...tab,
+          filePath: nextFilePath,
+          title: renamedRequestName,
+          request: { ...tab.request, name: renamedRequestName },
+          isDirty: true,
+        };
+      }),
+    }));
   },
 
   getActiveTab: () => {

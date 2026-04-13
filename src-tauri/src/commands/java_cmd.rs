@@ -1407,31 +1407,13 @@ pub async fn import_java_endpoints(options: JavaImportOptions) -> AppResult<Java
         let config = crate::models::project::ProjectConfig {
             version: "1.0.0".to_string(),
             name: project_name.to_string(),
-            active_environment: Some("default".to_string()),
+            active_environment: None,
             settings: crate::models::project::ProjectSettings::default(),
         };
 
         let config_path = new_path.join("sjypost.json");
         let config_content = serde_json::to_string_pretty(&config)?;
         fs::write(&config_path, config_content)?;
-
-        // Create default environment with baseUrl (use .environments to match project convention)
-        let env_dir = new_path.join(".environments");
-        fs::create_dir_all(&env_dir)?;
-
-        let env = crate::models::environment::Environment {
-            id: uuid::Uuid::new_v4().to_string(),
-            name: "default".to_string(),
-            variables: {
-                let mut vars = HashMap::new();
-                vars.insert("baseUrl".to_string(), options.base_url.clone());
-                vars
-            },
-        };
-
-        let env_path = env_dir.join("default.env.json");
-        let env_content = serde_json::to_string_pretty(&env)?;
-        fs::write(&env_path, env_content)?;
 
         new_path.to_string_lossy().to_string()
     } else {
